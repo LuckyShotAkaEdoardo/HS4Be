@@ -5,42 +5,68 @@ import { pool } from "../db.js";
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
-
 router.post("/register", async (req, res) => {
   const { username, password } = req.body;
   try {
-    const hash = await bcrypt.hash(password, 10);
+    // Controlla username già esistente
+    const result = await pool.query("SELECT 1 FROM users WHERE username = $1", [
+      username,
+    ]);
+    if (result.rowCount) {
+      return res.status(409).json({ error: "Username già in uso" });
+    }
+
+    // Hash della password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Inserisci nel DB
     await pool.query(
       "INSERT INTO users (username, password_hash) VALUES ($1, $2)",
-      [username, hash]
+      [username, passwordHash]
     );
-    res.send({ message: "User registered" });
+
+    return res
+      .status(201)
+      .json({ message: "Registrazione avvenuta con successo" });
   } catch (err) {
-    res
+    console.error("Errore registrazione:", err);
+    return res
       .status(500)
-      .send({ error: "Registration failed", details: err.message });
+      .json({ error: "Errore interno durante la registrazione" });
   }
 });
 
+r; // Login
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   try {
-    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
-      username,
-    ]);
+    // Recupera utente
+    const result = await pool.query(
+      "SELECT id, username, password_hash FROM users WHERE username = $1",
+      [username]
+    );
     const user = result.rows[0];
-    if (!user) return res.status(401).send({ error: "Invalid credentials" });
+    if (!user) {
+      return res.status(401).json({ error: "Credenziali non valide" });
+    }
 
-    const isValid = await bcrypt.compare(password, user.password_hash);
-    if (!isValid) return res.status(401).send({ error: "Invalid credentials" });
+    // Verifica password
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Credenziali non valide" });
+    }
 
+    // Genera JWT
     const token = jwt.sign(
       { id: user.id, username: user.username },
-      JWT_SECRET
+      JWT_SECRET,
+      { expiresIn: "2h" }
     );
-    res.send({ token });
+
+    return res.json({ token });
   } catch (err) {
-    res.status(500).send({ error: "Login failed", details: err.message });
+    console.error("Errore login:", err);
+    return res.status(500).json({ error: "Errore interno durante il login" });
   }
 });
 
