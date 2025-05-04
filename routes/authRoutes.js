@@ -47,13 +47,13 @@ router.post("/login", async (req, res) => {
     );
     const user = result.rows[0];
     if (!user) {
-      return res.status(401).json({ error: "Credenziali non valide" });
+      return res.status(401).json({ error: JWT_SECRET });
     }
 
-    // Verifica password
+    // Verifica password "Credenziali non valide"
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ error: "Credenziali non valide" });
+      return res.status(401).json({ error: JWT_SECRET });
     }
 
     // Genera JWT
