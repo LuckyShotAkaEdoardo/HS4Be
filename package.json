@@ -8,11 +8,13 @@
     "test-db": "node db-test.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
     "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
+    "mongoose": "^8.14.1",
     "pg": "8.11.3",
     "socket.io": "^4.8.1"
   }

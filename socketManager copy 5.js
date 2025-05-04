@@ -27,12 +27,7 @@ export const initializeSocket = (server) => {
     socket.on("join-game", (gameId) => {
       const g = games[gameId];
       if (!g) return socket.emit("error", "Partita non trovata");
-
       socket.join(gameId);
-
-      // Invia l'ID del giocatore al client
-      socket.emit("player-id", socket.id);
-
       io.to(gameId).emit("game-update", g);
     });
 
@@ -109,7 +104,6 @@ function handleAttack(io, socket, games, gameId, attacker, target) {
   att.justPlayed = true;
   io.to(gameId).emit("game-update", g);
 }
-
 function handleEndTurn(io, games, gameId) {
   const g = games[gameId];
   if (!g) return;
