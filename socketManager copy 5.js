@@ -120,7 +120,7 @@ function handleEndTurn(io, games, gameId) {
   g.crystals = g.crystals || {};
 
   g.boards[current] = g.boards[current] || [];
-  g.decks[current] = g.decks[current] || [];
+  g.decks[current] = g.decks[current] || 0;
   g.hands[current] = g.hands[current] || [];
 
   // Pesca 1 carta

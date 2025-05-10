@@ -10,8 +10,9 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app); // ✅ necessario per socket.io
+app.use(cors());
 app.use("/images", express.static("images"));
-
+console.log("guarda qui");
 app.use(cors());
 app.use(express.json());
 app.use("/auth", authRoutes);
