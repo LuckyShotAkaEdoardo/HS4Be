@@ -248,6 +248,7 @@ function sanitizeGameForPlayer(game, username) {
     status: game.status,
     currentTurnIndex: game.currentTurnIndex,
     currentPlayerId: game.currentPlayerId,
+    maxCrystals: game.maxCrystals,
     health: game.health,
     crystals: game.crystals,
     boards: {
