@@ -1,13 +1,11 @@
-// socketManager.js (rifattorizzato, centralizzazione matchmaking inclusa)
-
 import { Server } from "socket.io";
+import { matchmakingQueue1v1, handleMatchmaking1v1 } from "./matchmaking1v1.js";
 import { handleMatchmaking2v2 } from "./matchmaking2v2.js";
 import { handleMatchmakingVsNpc } from "./matchmakingVsNpc.js";
 
-let ioInstance;
 let games = {};
 const usernameToSocketId = {};
-let matchmakingQueue1v1 = [];
+let ioInstance;
 
 export const initializeSocket = (server) => {
   ioInstance = new Server(server, {
@@ -19,10 +17,7 @@ export const initializeSocket = (server) => {
     socket.emit("do-login");
 
     socket.on("login", ({ username }) => {
-      if (!username || typeof username !== "string") {
-        socket.emit("login-error", "Questo username è già in uso.");
-        return;
-      }
+      if (!username || typeof username !== "string") return;
 
       const existingSocketId = usernameToSocketId[username];
       if (existingSocketId && existingSocketId !== socket.id) {
@@ -46,6 +41,10 @@ export const initializeSocket = (server) => {
 
       if (rejoinGame && isGameReady(rejoinGame)) {
         rejoinGame.usernames[username] = socket.id;
+        if (!rejoinGame.allPlayers.includes(username)) {
+          rejoinGame.allPlayers.push(username);
+        }
+
         socket.join(rejoinGame.id);
         socket.emit("player-id", username);
 
@@ -71,48 +70,27 @@ export const initializeSocket = (server) => {
         emitSanitizedGameUpdate(ioInstance, rejoinGame);
         return;
       }
-    });
 
-    socket.on("matchmaking-1v1", (playerDeck) => {
-      const username = socket.username;
-      if (!username) return socket.emit("abort-match");
-
-      const existing = matchmakingQueue1v1.find((e) => e.username === username);
+      const existing = matchmakingQueue1v1.find(
+        (e) => e.socket.username === username
+      );
       if (existing) {
         existing.socket = socket;
-        existing.deck = playerDeck;
-        return socket.emit("matchmaking-waiting", {
-          message: "Già in coda, aggiornato il socket",
+        socket.emit("matchmaking-waiting", {
+          message: "Riconnesso alla coda 1v1",
         });
-      }
-
-      matchmakingQueue1v1.push({ username, socket, deck: playerDeck });
-
-      if (matchmakingQueue1v1.length >= 2) {
-        const {
-          username: u1,
-          socket: s1,
-          deck: d1,
-        } = matchmakingQueue1v1.shift();
-        const nextIndex = matchmakingQueue1v1.findIndex(
-          (e) => e.username !== u1
-        );
-
-        if (nextIndex === -1) {
-          matchmakingQueue1v1.unshift({ username: u1, socket: s1, deck: d1 });
-          return;
-        }
-
-        const {
-          username: u2,
-          socket: s2,
-          deck: d2,
-        } = matchmakingQueue1v1.splice(nextIndex, 1)[0];
-
-        createGame1v1(u1, s1, d1, u2, s2, d2);
       }
     });
 
+    socket.on("matchmaking-1v1", (deck) =>
+      handleMatchmaking1v1(
+        ioInstance,
+        socket,
+        games,
+        deck,
+        emitSanitizedGameUpdate
+      )
+    );
     socket.on("matchmaking-2v2", (data) =>
       handleMatchmaking2v2(ioInstance, socket, games, data)
     );
@@ -246,9 +224,8 @@ export const initializeSocket = (server) => {
 
     socket.on("disconnect", () => {
       const username = socket.username;
-      if (usernameToSocketId[username] === socket.id) {
+      if (usernameToSocketId[username] === socket.id)
         delete usernameToSocketId[username];
-      }
       for (const g of Object.values(games)) {
         if (g.usernames) delete g.usernames[username];
       }
@@ -301,71 +278,6 @@ function isGameReady(game) {
         ioInstance.sockets.sockets.has(usernameToSocketId[p])
     );
   return connectedPlayers.length >= 2;
-}
-
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
-
-let globalCardId = 1;
-function assignUniqueIds(deck) {
-  return deck.map((card) => ({ ...card, id: globalCardId++ }));
-}
-
-function createGame1v1(u1, s1, deck1, u2, s2, deck2) {
-  const fullDeck1 = assignUniqueIds(shuffle([...deck1]));
-  const fullDeck2 = assignUniqueIds(shuffle([...deck2]));
-  const hand1 = fullDeck1.splice(0, 4);
-  const hand2 = fullDeck2.splice(0, 4);
-
-  const gameId = Math.random().toString(36).substring(2, 9);
-  const game = {
-    id: gameId,
-    name: "1v1 Match",
-    status: "started",
-    teams: [
-      { name: "Squadra 1", username: u1, players: [u1] },
-      { name: "Squadra 2", username: u2, players: [u2] },
-    ],
-    currentTurnIndex: 0,
-    currentPlayerId: u1,
-    allPlayers: [u1, u2],
-    crystals: { [u1]: 1, [u2]: 1 },
-    maxCrystals: { [u1]: 1, [u2]: 1 },
-    health: { [u1]: 20, [u2]: 20 },
-    decks: { [u1]: fullDeck1, [u2]: fullDeck2 },
-    hands: { [u1]: hand1, [u2]: hand2 },
-    boards: { [u1]: [], [u2]: [] },
-    usernames: { [u1]: s1.id, [u2]: s2.id },
-  };
-
-  games[gameId] = game;
-  console.log(`🟢 1v1 avviata tra ${u1} e ${u2} → gameId: ${gameId}`);
-
-  [s1, s2].forEach((socket) => {
-    const uname = socket.username;
-    const team = game.teams.find((t) => t.players.includes(uname));
-    socket.join(gameId);
-    socket.emit("game-started", {
-      gameId,
-      team,
-      crystals: game.crystals[uname],
-      health: game.health,
-      hand: game.hands[uname],
-      deckLength: game.decks[uname]?.length || 0,
-    });
-    socket.emit("player-id", uname);
-  });
-
-  emitSanitizedGameUpdate(ioInstance, game);
-  ioInstance.to(gameId).emit("turn-update", {
-    currentPlayerId: u1,
-    crystals: game.crystals[u1],
-  });
 }
 
 export function cleanupOldGames() {

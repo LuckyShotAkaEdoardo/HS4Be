@@ -1,6 +1,6 @@
 // ✅ matchmaking1v1.js (aggiornato con username al posto di socket.id)
 
-export const matchmakingQueue1v1 = [];
+export let matchmakingQueue1v1 = [];
 
 export const handleMatchmaking1v1 = (
   io,
@@ -10,7 +10,10 @@ export const handleMatchmaking1v1 = (
   emitSanitizedGameUpdate
 ) => {
   const username = socket.username;
-  if (!username) return;
+  if (!username) {
+    socket.emit("abort-match");
+    return;
+  }
 
   console.log("Richiesta matchmaking 1v1 da", username);
   matchmakingQueue1v1.push({ socket, deck: playerDeck });
@@ -23,7 +26,15 @@ export const handleMatchmaking1v1 = (
     const p2 = player2Data.socket;
     const u1 = p1.username;
     const u2 = p2.username;
-
+    if (u1 === u2) {
+      console.warn(
+        "Matchmaking annullato: stesso username per entrambi i giocatori."
+      );
+      matchmakingQueue1v1.unshift(player1Data);
+      // Puoi anche reinserirne uno in coda se vuoi
+      matchmakingQueue1v1.unshift(player2Data); // rimetti il secondo in coda
+      return;
+    }
     const fullDeck1 = assignUniqueIds(shuffle([...player1Data.deck]));
     const fullDeck2 = assignUniqueIds(shuffle([...player2Data.deck]));
     const hand1 = fullDeck1.splice(0, 4);
