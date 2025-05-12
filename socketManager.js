@@ -8,6 +8,7 @@ let ioInstance;
 let games = {};
 const usernameToSocketId = {};
 let matchmakingQueue1v1 = [];
+const disconnectTimeouts = {}; // { username: Timeout }
 
 export const initializeSocket = (server) => {
   ioInstance = new Server(server, {
@@ -43,6 +44,10 @@ export const initializeSocket = (server) => {
       const rejoinGame = Object.values(games).find((g) =>
         g.allPlayers?.includes(username)
       );
+      if (disconnectTimeouts[username]) {
+        clearTimeout(disconnectTimeouts[username]);
+        delete disconnectTimeouts[username];
+      }
 
       if (rejoinGame && isGameReady(rejoinGame)) {
         rejoinGame.usernames[username] = socket.id;
@@ -123,8 +128,11 @@ export const initializeSocket = (server) => {
     socket.on("play-card", ({ gameId, card }) => {
       const g = games[gameId];
       const username = socket.username;
-      if (!g || !username || g.status === "ended") return;
 
+      if (!g || !username || g.status === "ended") return;
+      if (username !== g.currentPlayerId) {
+        return socket.emit("error", "Non è il tuo turno");
+      }
       if (card.cost > (g.crystals[username] || 0)) {
         return socket.emit(
           "error",
@@ -153,7 +161,9 @@ export const initializeSocket = (server) => {
       const username = socket.username;
       if (!g || !username || !attacker || !target || g.status === "ended")
         return;
-
+      if (username !== g.currentPlayerId) {
+        return socket.emit("error", "Non è il tuo turno");
+      }
       const board = g.boards[username] || [];
       const att = board.find((c) => c.id === attacker.id);
       if (!att || att.justPlayed)
@@ -190,7 +200,9 @@ export const initializeSocket = (server) => {
     socket.on("end-turn", (gameId) => {
       const g = games[gameId];
       if (!g || g.status === "ended") return;
-
+      if (socket.username !== g.currentPlayerId) {
+        return socket.emit("error", "Non è il tuo turno");
+      }
       g.currentTurnIndex = (g.currentTurnIndex + 1) % g.allPlayers.length;
       const current = g.allPlayers[g.currentTurnIndex];
       g.currentPlayerId = current;
@@ -234,6 +246,16 @@ export const initializeSocket = (server) => {
       const username = socket.username;
       if (usernameToSocketId[username] === socket.id) {
         delete usernameToSocketId[username];
+        const g = Object.values(games).find((g) =>
+          g.allPlayers?.includes(username)
+        );
+        if (g) {
+          const opponent = g.allPlayers.find((u) => u !== username);
+          disconnectTimeouts[username] = setTimeout(() => {
+            endGame(g.id, opponent, username);
+            delete disconnectTimeouts[username];
+          }, 30000); // ⏱️ 30 secondi
+        }
       }
       for (const g of Object.values(games)) {
         if (g.usernames) delete g.usernames[username];
@@ -258,7 +280,7 @@ function sanitizeGameForPlayer(game, username) {
     status: game.status,
     currentTurnIndex: game.currentTurnIndex,
     currentPlayerId: game.currentPlayerId,
-
+    allPlayers: game.allPlayers,
     maxCrystals: game.maxCrystals,
     health: game.health,
     crystals: game.crystals,
