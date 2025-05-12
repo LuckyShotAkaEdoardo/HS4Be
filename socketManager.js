@@ -177,19 +177,7 @@ export const initializeSocket = (server) => {
       } else if (target.type === "FACE") {
         g.health[target.playerId] -= att.attack;
         if (g.health[target.playerId] <= 0) {
-          g.status = "ended";
-          ioInstance.to(g.id).emit("game-over", {
-            winner: username,
-            loser: target.playerId,
-          });
-
-          const loserSocketId = g.usernames[target.playerId];
-          if (loserSocketId) {
-            ioInstance.to(loserSocketId).emit("you-lost", {
-              message: "Hai perso la partita!",
-            });
-          }
-          return;
+          endGame(gameId, username, target.playerId);
         }
       }
 
@@ -236,12 +224,10 @@ export const initializeSocket = (server) => {
       const g = games[gameId];
       const username = socket.username;
       if (!g || !username) return;
-      g.allPlayers = g.allPlayers.filter((u) => u !== username);
-      delete g.boards[username];
-      delete g.hands[username];
-      delete g.crystals[username];
-      delete g.usernames[username];
-      emitSanitizedGameUpdate(ioInstance, g);
+      const opponent = g.allPlayers.find((u) => u !== username);
+      if (opponent) {
+        endGame(gameId, opponent, username);
+      }
     });
 
     socket.on("disconnect", () => {
@@ -272,6 +258,7 @@ function sanitizeGameForPlayer(game, username) {
     status: game.status,
     currentTurnIndex: game.currentTurnIndex,
     currentPlayerId: game.currentPlayerId,
+
     maxCrystals: game.maxCrystals,
     health: game.health,
     crystals: game.crystals,
@@ -395,6 +382,30 @@ export function cleanupOldGames() {
       );
     })
   );
+}
+
+function endGame(gameId, winner, loser) {
+  const g = games[gameId];
+  if (!g || g.status === "ended") return;
+
+  g.status = "ended";
+
+  const winnerSocketId = g.usernames[winner];
+  const loserSocketId = g.usernames[loser];
+
+  if (winnerSocketId) {
+    ioInstance.to(winnerSocketId).emit("you-won", {
+      message: "Hai vinto la partita!",
+    });
+  }
+
+  if (loserSocketId) {
+    ioInstance.to(loserSocketId).emit("you-lost", {
+      message: "Hai perso la partita!",
+    });
+  }
+
+  ioInstance.to(g.id).emit("game-over", { winner, loser });
 }
 
 export function logStatus() {

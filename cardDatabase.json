@@ -1,1002 +1,1002 @@
 [
   {
     "id": 1,
-    "name": "Guerriero Antico",
-    "attack": 3,
-    "defense": 6,
     "cost": 7,
+    "name": "Guerriero Antico",
+    "type": "HERO",
+    "image": "guerriero_antico.jpg",
+    "attack": 3,
     "effect": "Effetto speciale per Guerriero Antico.",
-    "image": "guerriero_antico.png",
-    "type": "HERO"
+    "defense": 6
   },
   {
     "id": 2,
-    "name": "Mago delle Fiamme",
-    "attack": 2,
-    "defense": 1,
     "cost": 7,
+    "name": "Mago delle Fiamme",
+    "type": "HERO",
+    "image": "mago_delle_fiamme.jpg",
+    "attack": 2,
     "effect": "Effetto speciale per Mago delle Fiamme.",
-    "image": "mago_delle_fiamme.png",
-    "type": "HERO"
+    "defense": 1
   },
   {
     "id": 3,
-    "name": "Elfo Arcere",
-    "attack": 8,
-    "defense": 5,
     "cost": 7,
+    "name": "Elfo Arcere",
+    "type": "HERO",
+    "image": "elfo_arcere.jpg",
+    "attack": 8,
     "effect": "Effetto speciale per Elfo Arcere.",
-    "image": "elfo_arcere.png",
-    "type": "HERO"
+    "defense": 5
   },
   {
     "id": 4,
-    "name": "Drago di Ghiaccio",
-    "attack": 7,
-    "defense": 5,
     "cost": 5,
+    "name": "Drago di Ghiaccio",
+    "type": "HERO",
+    "image": "drago_di_ghiaccio.jpg",
+    "attack": 7,
     "effect": "Effetto speciale per Drago di Ghiaccio.",
-    "image": "drago_di_ghiaccio.png",
-    "type": "HERO"
+    "defense": 5
   },
   {
     "id": 5,
-    "name": "Cavaliere della Luce",
-    "attack": 2,
-    "defense": 7,
     "cost": 3,
+    "name": "Cavaliere della Luce",
+    "type": "HERO",
+    "image": "cavaliere_della_luce.jpg",
+    "attack": 2,
     "effect": "Effetto speciale per Cavaliere della Luce.",
-    "image": "cavaliere_della_luce.png",
-    "type": "HERO"
+    "defense": 7
   },
   {
     "id": 6,
-    "name": "Troll della Caverna",
-    "attack": 4,
-    "defense": 3,
     "cost": 7,
+    "name": "Troll della Caverna",
+    "type": "HERO",
+    "image": "troll_della_caverna.jpg",
+    "attack": 4,
     "effect": "Effetto speciale per Troll della Caverna.",
-    "image": "troll_della_caverna.png",
-    "type": "HERO"
+    "defense": 3
   },
   {
     "id": 7,
-    "name": "Spirito della Foresta",
-    "attack": 8,
-    "defense": 3,
     "cost": 6,
+    "name": "Spirito della Foresta",
+    "type": "HERO",
+    "image": "spirito_della_foresta.jpg",
+    "attack": 8,
     "effect": "Effetto speciale per Spirito della Foresta.",
-    "image": "spirito_della_foresta.png",
-    "type": "HERO"
+    "defense": 3
   },
   {
     "id": 8,
-    "name": "Paladino Ombroso",
-    "attack": 4,
-    "defense": 1,
     "cost": 4,
+    "name": "Paladino Ombroso",
+    "type": "HERO",
+    "image": "paladino_ombroso.jpg",
+    "attack": 4,
     "effect": "Effetto speciale per Paladino Ombroso.",
-    "image": "paladino_ombroso.png",
-    "type": "HERO"
+    "defense": 1
   },
   {
     "id": 9,
-    "name": "Lupo Fantasma",
-    "attack": 1,
-    "defense": 3,
     "cost": 5,
+    "name": "Lupo Fantasma",
+    "type": "HERO",
+    "image": "lupo_fantasma.jpg",
+    "attack": 1,
     "effect": "Effetto speciale per Lupo Fantasma.",
-    "image": "lupo_fantasma.png",
-    "type": "HERO"
+    "defense": 3
   },
   {
     "id": 10,
-    "name": "Strega del Nord",
-    "attack": 5,
-    "defense": 1,
     "cost": 3,
+    "name": "Strega del Nord",
+    "type": "HERO",
+    "image": "strega_del_nord.jpg",
+    "attack": 5,
     "effect": "Effetto speciale per Strega del Nord.",
-    "image": "strega_del_nord.png",
-    "type": "HERO"
+    "defense": 1
   },
   {
     "id": 11,
-    "name": "Sirena degli Abissi",
-    "attack": 7,
-    "defense": 7,
     "cost": 7,
+    "name": "Sirena degli Abissi",
+    "type": "HERO",
+    "image": "sirena_degli_abissi.jpg",
+    "attack": 7,
     "effect": "Effetto speciale per Sirena degli Abissi.",
-    "image": "sirena_degli_abissi.png",
-    "type": "HERO"
+    "defense": 7
   },
   {
     "id": 12,
-    "name": "Orco Bruto",
-    "attack": 5,
-    "defense": 5,
     "cost": 7,
+    "name": "Orco Bruto",
+    "type": "HERO",
+    "image": "orco_bruto.jpg",
+    "attack": 5,
     "effect": "Effetto speciale per Orco Bruto.",
-    "image": "orco_bruto.png",
-    "type": "HERO"
+    "defense": 5
   },
   {
     "id": 13,
-    "name": "Nano Ingegnere",
-    "attack": 1,
-    "defense": 0,
     "cost": 4,
+    "name": "Nano Ingegnere",
+    "type": "HERO",
+    "image": "nano_ingegnere.jpg",
+    "attack": 1,
     "effect": "Effetto speciale per Nano Ingegnere.",
-    "image": "nano_ingegnere.png",
-    "type": "HERO"
+    "defense": 0
   },
   {
     "id": 14,
-    "name": "Golem di Pietra",
-    "attack": 8,
-    "defense": 3,
     "cost": 3,
+    "name": "Golem di Pietra",
+    "type": "HERO",
+    "image": "golem_di_pietra.jpg",
+    "attack": 8,
     "effect": "Effetto speciale per Golem di Pietra.",
-    "image": "golem_di_pietra.png",
-    "type": "HERO"
+    "defense": 3
   },
   {
     "id": 15,
-    "name": "Centauro Feroce",
-    "attack": 5,
-    "defense": 3,
     "cost": 4,
+    "name": "Centauro Feroce",
+    "type": "HERO",
+    "image": "centauro_feroce.jpg",
+    "attack": 5,
     "effect": "Effetto speciale per Centauro Feroce.",
-    "image": "centauro_feroce.png",
-    "type": "HERO"
+    "defense": 3
   },
   {
     "id": 16,
-    "name": "Arciere Celeste",
-    "attack": 1,
-    "defense": 7,
     "cost": 6,
+    "name": "Arciere Celeste",
+    "type": "HERO",
+    "image": "arciere_celeste.jpg",
+    "attack": 1,
     "effect": "Effetto speciale per Arciere Celeste.",
-    "image": "arciere_celeste.png",
-    "type": "HERO"
+    "defense": 7
   },
   {
     "id": 17,
-    "name": "Maga della Notte",
-    "attack": 8,
-    "defense": 2,
     "cost": 6,
+    "name": "Maga della Notte",
+    "type": "HERO",
+    "image": "maga_della_notte.jpg",
+    "attack": 8,
     "effect": "Effetto speciale per Maga della Notte.",
-    "image": "maga_della_notte.png",
-    "type": "HERO"
+    "defense": 2
   },
   {
     "id": 18,
-    "name": "Templare Sacro",
-    "attack": 7,
-    "defense": 5,
     "cost": 2,
+    "name": "Templare Sacro",
+    "type": "HERO",
+    "image": "templare_sacro.jpg",
+    "attack": 7,
     "effect": "Effetto speciale per Templare Sacro.",
-    "image": "templare_sacro.png",
-    "type": "HERO"
+    "defense": 5
   },
   {
     "id": 19,
-    "name": "Bestia della Valle",
-    "attack": 3,
-    "defense": 1,
     "cost": 5,
+    "name": "Bestia della Valle",
+    "type": "HERO",
+    "image": "bestia_della_valle.jpg",
+    "attack": 3,
     "effect": "Effetto speciale per Bestia della Valle.",
-    "image": "bestia_della_valle.png",
-    "type": "HERO"
+    "defense": 1
   },
   {
     "id": 20,
-    "name": "Vampiro Nobile",
-    "attack": 1,
-    "defense": 7,
     "cost": 6,
+    "name": "Vampiro Nobile",
+    "type": "HERO",
+    "image": "vampiro_nobile.jpg",
+    "attack": 1,
     "effect": "Effetto speciale per Vampiro Nobile.",
-    "image": "vampiro_nobile.png",
-    "type": "HERO"
+    "defense": 7
   },
   {
     "id": 21,
-    "name": "Fata Lucente",
-    "attack": 8,
-    "defense": 0,
     "cost": 4,
+    "name": "Fata Lucente",
+    "type": "HERO",
+    "image": "fata_lucente.jpg",
+    "attack": 8,
     "effect": "Effetto speciale per Fata Lucente.",
-    "image": "fata_lucente.png",
-    "type": "HERO"
+    "defense": 0
   },
   {
     "id": 22,
-    "name": "Demone del Caos",
-    "attack": 2,
-    "defense": 2,
     "cost": 7,
+    "name": "Demone del Caos",
+    "type": "HERO",
+    "image": "demone_del_caos.jpg",
+    "attack": 2,
     "effect": "Effetto speciale per Demone del Caos.",
-    "image": "demone_del_caos.png",
-    "type": "HERO"
+    "defense": 2
   },
   {
     "id": 23,
-    "name": "Custode della Cripta",
-    "attack": 5,
-    "defense": 0,
     "cost": 2,
+    "name": "Custode della Cripta",
+    "type": "HERO",
+    "image": "custode_della_cripta.jpg",
+    "attack": 5,
     "effect": "Effetto speciale per Custode della Cripta.",
-    "image": "custode_della_cripta.png",
-    "type": "HERO"
+    "defense": 0
   },
   {
     "id": 24,
-    "name": "Ranger delle Dune",
-    "attack": 3,
-    "defense": 1,
     "cost": 6,
+    "name": "Ranger delle Dune",
+    "type": "HERO",
+    "image": "ranger_delle_dune.jpg",
+    "attack": 3,
     "effect": "Effetto speciale per Ranger delle Dune.",
-    "image": "ranger_delle_dune.png",
-    "type": "HERO"
+    "defense": 1
   },
   {
     "id": 25,
-    "name": "Cacciatore di Ombre",
-    "attack": 1,
-    "defense": 4,
     "cost": 3,
+    "name": "Cacciatore di Ombre",
+    "type": "HERO",
+    "image": "cacciatore_di_ombre.jpg",
+    "attack": 1,
     "effect": "Effetto speciale per Cacciatore di Ombre.",
-    "image": "cacciatore_di_ombre.png",
-    "type": "HERO"
+    "defense": 4
   },
   {
     "id": 26,
-    "name": "Samurai Errante",
-    "attack": 7,
-    "defense": 7,
     "cost": 4,
+    "name": "Samurai Errante",
+    "type": "HERO",
+    "image": "samurai_errante.jpg",
+    "attack": 7,
     "effect": "Effetto speciale per Samurai Errante.",
-    "image": "samurai_errante.png",
-    "type": "HERO"
+    "defense": 7
   },
   {
     "id": 27,
-    "name": "Giullare Maledetto",
-    "attack": 8,
-    "defense": 2,
     "cost": 7,
+    "name": "Giullare Maledetto",
+    "type": "HERO",
+    "image": "giullare_maledetto.jpg",
+    "attack": 8,
     "effect": "Effetto speciale per Giullare Maledetto.",
-    "image": "giullare_maledetto.png",
-    "type": "HERO"
+    "defense": 2
   },
   {
     "id": 28,
-    "name": "Guerriero Meccanico",
-    "attack": 6,
-    "defense": 2,
     "cost": 4,
+    "name": "Guerriero Meccanico",
+    "type": "HERO",
+    "image": "guerriero_meccanico.jpg",
+    "attack": 6,
     "effect": "Effetto speciale per Guerriero Meccanico.",
-    "image": "guerriero_meccanico.png",
-    "type": "HERO"
+    "defense": 2
   },
   {
     "id": 29,
-    "name": "Ladra d'Ombra",
-    "attack": 5,
-    "defense": 4,
     "cost": 4,
+    "name": "Ladra d'Ombra",
+    "type": "HERO",
+    "image": "ladra_d'ombra.jpg",
+    "attack": 5,
     "effect": "Effetto speciale per Ladra d'Ombra.",
-    "image": "ladra_d'ombra.png",
-    "type": "HERO"
+    "defense": 4
   },
   {
     "id": 30,
-    "name": "Alchimista Errante",
-    "attack": 2,
-    "defense": 6,
     "cost": 3,
+    "name": "Alchimista Errante",
+    "type": "HERO",
+    "image": "alchimista_errante.jpg",
+    "attack": 2,
     "effect": "Effetto speciale per Alchimista Errante.",
-    "image": "alchimista_errante.png",
-    "type": "HERO"
+    "defense": 6
   },
   {
     "id": 31,
-    "name": "Evocatore Antico",
-    "attack": 4,
-    "defense": 8,
     "cost": 6,
+    "name": "Evocatore Antico",
+    "type": "HERO",
+    "image": "evocatore_antico.jpg",
+    "attack": 4,
     "effect": "Effetto speciale per Evocatore Antico.",
-    "image": "evocatore_antico.png",
-    "type": "HERO"
+    "defense": 8
   },
   {
     "id": 32,
-    "name": "Spadaccino Eterno",
-    "attack": 1,
-    "defense": 8,
     "cost": 2,
+    "name": "Spadaccino Eterno",
+    "type": "HERO",
+    "image": "spadaccino_eterno.jpg",
+    "attack": 1,
     "effect": "Effetto speciale per Spadaccino Eterno.",
-    "image": "spadaccino_eterno.png",
-    "type": "HERO"
+    "defense": 8
   },
   {
     "id": 33,
-    "name": "Negromante del Vuoto",
-    "attack": 2,
-    "defense": 8,
     "cost": 2,
+    "name": "Negromante del Vuoto",
+    "type": "HERO",
+    "image": "negromante_del_vuoto.jpg",
+    "attack": 2,
     "effect": "Effetto speciale per Negromante del Vuoto.",
-    "image": "negromante_del_vuoto.png",
-    "type": "HERO"
+    "defense": 8
   },
   {
     "id": 34,
-    "name": "Saggio del Vento",
-    "attack": 6,
-    "defense": 6,
     "cost": 2,
+    "name": "Saggio del Vento",
+    "type": "HERO",
+    "image": "saggio_del_vento.jpg",
+    "attack": 6,
     "effect": "Effetto speciale per Saggio del Vento.",
-    "image": "saggio_del_vento.png",
-    "type": "HERO"
+    "defense": 6
   },
   {
     "id": 35,
-    "name": "Re Drago",
-    "attack": 5,
-    "defense": 2,
     "cost": 5,
+    "name": "Re Drago",
+    "type": "HERO",
+    "image": "re_drago.jpg",
+    "attack": 5,
     "effect": "Effetto speciale per Re Drago.",
-    "image": "re_drago.png",
-    "type": "HERO"
+    "defense": 2
   },
   {
     "id": 36,
-    "name": "Guardia Imperiale",
-    "attack": 4,
-    "defense": 4,
     "cost": 7,
+    "name": "Guardia Imperiale",
+    "type": "HERO",
+    "image": "guardia_imperiale.jpg",
+    "attack": 4,
     "effect": "Effetto speciale per Guardia Imperiale.",
-    "image": "guardia_imperiale.png",
-    "type": "HERO"
+    "defense": 4
   },
   {
     "id": 37,
-    "name": "Cavaliere Nero",
-    "attack": 0,
-    "defense": 6,
     "cost": 5,
+    "name": "Cavaliere Nero",
+    "type": "HERO",
+    "image": "cavaliere_nero.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Cavaliere Nero.",
-    "image": "cavaliere_nero.png",
-    "type": "HERO"
+    "defense": 6
   },
   {
     "id": 38,
-    "name": "Erborista dei Colli",
-    "attack": 8,
-    "defense": 6,
     "cost": 7,
+    "name": "Erborista dei Colli",
+    "type": "HERO",
+    "image": "erborista_dei_colli.jpg",
+    "attack": 8,
     "effect": "Effetto speciale per Erborista dei Colli.",
-    "image": "erborista_dei_colli.png",
-    "type": "HERO"
+    "defense": 6
   },
   {
     "id": 39,
-    "name": "Artigliere Fatato",
-    "attack": 5,
-    "defense": 6,
     "cost": 6,
+    "name": "Artigliere Fatato",
+    "type": "HERO",
+    "image": "artigliere_fatato.jpg",
+    "attack": 5,
     "effect": "Effetto speciale per Artigliere Fatato.",
-    "image": "artigliere_fatato.png",
-    "type": "HERO"
+    "defense": 6
   },
   {
     "id": 40,
-    "name": "Mistico delle Stelle",
-    "attack": 8,
-    "defense": 8,
     "cost": 5,
+    "name": "Mistico delle Stelle",
+    "type": "HERO",
+    "image": "mistico_delle_stelle.jpg",
+    "attack": 8,
     "effect": "Effetto speciale per Mistico delle Stelle.",
-    "image": "mistico_delle_stelle.png",
-    "type": "HERO"
+    "defense": 8
   },
   {
     "id": 41,
-    "name": "Veggente del Mare",
-    "attack": 7,
-    "defense": 8,
     "cost": 5,
+    "name": "Veggente del Mare",
+    "type": "HERO",
+    "image": "veggente_del_mare.jpg",
+    "attack": 7,
     "effect": "Effetto speciale per Veggente del Mare.",
-    "image": "veggente_del_mare.png",
-    "type": "HERO"
+    "defense": 8
   },
   {
     "id": 42,
-    "name": "Domatore di Serpenti",
-    "attack": 3,
-    "defense": 6,
     "cost": 4,
+    "name": "Domatore di Serpenti",
+    "type": "HERO",
+    "image": "domatore_di_serpenti.jpg",
+    "attack": 3,
     "effect": "Effetto speciale per Domatore di Serpenti.",
-    "image": "domatore_di_serpenti.png",
-    "type": "HERO"
+    "defense": 6
   },
   {
     "id": 43,
-    "name": "Monaco Errante",
-    "attack": 7,
-    "defense": 0,
     "cost": 2,
+    "name": "Monaco Errante",
+    "type": "HERO",
+    "image": "monaco_errante.jpg",
+    "attack": 7,
     "effect": "Effetto speciale per Monaco Errante.",
-    "image": "monaco_errante.png",
-    "type": "HERO"
+    "defense": 0
   },
   {
     "id": 44,
-    "name": "Custode del Sigillo",
-    "attack": 7,
-    "defense": 7,
     "cost": 7,
+    "name": "Custode del Sigillo",
+    "type": "HERO",
+    "image": "custode_del_sigillo.jpg",
+    "attack": 7,
     "effect": "Effetto speciale per Custode del Sigillo.",
-    "image": "custode_del_sigillo.png",
-    "type": "HERO"
+    "defense": 7
   },
   {
     "id": 45,
-    "name": "Centauro del Bosco",
-    "attack": 8,
-    "defense": 8,
     "cost": 4,
+    "name": "Centauro del Bosco",
+    "type": "HERO",
+    "image": "centauro_del_bosco.jpg",
+    "attack": 8,
     "effect": "Effetto speciale per Centauro del Bosco.",
-    "image": "centauro_del_bosco.png",
-    "type": "HERO"
+    "defense": 8
   },
   {
     "id": 46,
-    "name": "Oracolo del Fuoco",
-    "attack": 3,
-    "defense": 7,
     "cost": 5,
+    "name": "Oracolo del Fuoco",
+    "type": "HERO",
+    "image": "oracolo_del_fuoco.jpg",
+    "attack": 3,
     "effect": "Effetto speciale per Oracolo del Fuoco.",
-    "image": "oracolo_del_fuoco.png",
-    "type": "HERO"
+    "defense": 7
   },
   {
     "id": 47,
-    "name": "Sentinella del Tramonto",
-    "attack": 1,
-    "defense": 5,
     "cost": 5,
+    "name": "Sentinella del Tramonto",
+    "type": "HERO",
+    "image": "sentinella_del_tramonto.jpg",
+    "attack": 1,
     "effect": "Effetto speciale per Sentinella del Tramonto.",
-    "image": "sentinella_del_tramonto.png",
-    "type": "HERO"
+    "defense": 5
   },
   {
     "id": 48,
-    "name": "Assassino delle Sabbie",
-    "attack": 1,
-    "defense": 6,
     "cost": 7,
+    "name": "Assassino delle Sabbie",
+    "type": "HERO",
+    "image": "assassino_delle_sabbie.jpg",
+    "attack": 1,
     "effect": "Effetto speciale per Assassino delle Sabbie.",
-    "image": "assassino_delle_sabbie.png",
-    "type": "HERO"
+    "defense": 6
   },
   {
     "id": 49,
-    "name": "Cercatore di Reliquie",
-    "attack": 5,
-    "defense": 2,
     "cost": 4,
+    "name": "Cercatore di Reliquie",
+    "type": "HERO",
+    "image": "cercatore_di_reliquie.jpg",
+    "attack": 5,
     "effect": "Effetto speciale per Cercatore di Reliquie.",
-    "image": "cercatore_di_reliquie.png",
-    "type": "HERO"
+    "defense": 2
   },
   {
     "id": 50,
-    "name": "Capitano della Resistenza",
-    "attack": 3,
-    "defense": 5,
     "cost": 4,
+    "name": "Capitano della Resistenza",
+    "type": "HERO",
+    "image": "capitano_della_resistenza.jpg",
+    "attack": 3,
     "effect": "Effetto speciale per Capitano della Resistenza.",
-    "image": "capitano_della_resistenza.png",
-    "type": "HERO"
+    "defense": 5
   },
   {
     "id": 51,
-    "name": "Predatore delle Lande",
-    "attack": 4,
-    "defense": 2,
     "cost": 5,
+    "name": "Predatore delle Lande",
+    "type": "HERO",
+    "image": "predatore_delle_lande.jpg",
+    "attack": 4,
     "effect": "Effetto speciale per Predatore delle Lande.",
-    "image": "predatore_delle_lande.png",
-    "type": "HERO"
+    "defense": 2
   },
   {
     "id": 52,
-    "name": "Artigiano Runico",
-    "attack": 4,
-    "defense": 8,
     "cost": 6,
+    "name": "Artigiano Runico",
+    "type": "HERO",
+    "image": "artigiano_runico.jpg",
+    "attack": 4,
     "effect": "Effetto speciale per Artigiano Runico.",
-    "image": "artigiano_runico.png",
-    "type": "HERO"
+    "defense": 8
   },
   {
     "id": 53,
-    "name": "Comandante del Nord",
-    "attack": 7,
-    "defense": 1,
     "cost": 3,
+    "name": "Comandante del Nord",
+    "type": "HERO",
+    "image": "comandante_del_nord.jpg",
+    "attack": 7,
     "effect": "Effetto speciale per Comandante del Nord.",
-    "image": "comandante_del_nord.png",
-    "type": "HERO"
+    "defense": 1
   },
   {
     "id": 54,
-    "name": "Condottiero Leggendario",
-    "attack": 5,
-    "defense": 3,
     "cost": 5,
+    "name": "Condottiero Leggendario",
+    "type": "HERO",
+    "image": "condottiero_leggendario.jpg",
+    "attack": 5,
     "effect": "Effetto speciale per Condottiero Leggendario.",
-    "image": "condottiero_leggendario.png",
-    "type": "HERO"
+    "defense": 3
   },
   {
     "id": 55,
-    "name": "Combattente Selvaggio",
-    "attack": 3,
-    "defense": 2,
     "cost": 5,
+    "name": "Combattente Selvaggio",
+    "type": "HERO",
+    "image": "combattente_selvaggio.jpg",
+    "attack": 3,
     "effect": "Effetto speciale per Combattente Selvaggio.",
-    "image": "combattente_selvaggio.png",
-    "type": "HERO"
+    "defense": 2
   },
   {
     "id": 56,
-    "name": "Mercenario del Deserto",
-    "attack": 2,
-    "defense": 3,
     "cost": 4,
+    "name": "Mercenario del Deserto",
+    "type": "HERO",
+    "image": "mercenario_del_deserto.jpg",
+    "attack": 2,
     "effect": "Effetto speciale per Mercenario del Deserto.",
-    "image": "mercenario_del_deserto.png",
-    "type": "HERO"
+    "defense": 3
   },
   {
     "id": 57,
-    "name": "Bestia della Notte",
-    "attack": 2,
-    "defense": 3,
     "cost": 7,
+    "name": "Bestia della Notte",
+    "type": "HERO",
+    "image": "bestia_della_notte.jpg",
+    "attack": 2,
     "effect": "Effetto speciale per Bestia della Notte.",
-    "image": "bestia_della_notte.png",
-    "type": "HERO"
+    "defense": 3
   },
   {
     "id": 58,
-    "name": "Cavaliere del Sole",
-    "attack": 6,
-    "defense": 2,
     "cost": 4,
+    "name": "Cavaliere del Sole",
+    "type": "HERO",
+    "image": "cavaliere_del_sole.jpg",
+    "attack": 6,
     "effect": "Effetto speciale per Cavaliere del Sole.",
-    "image": "cavaliere_del_sole.png",
-    "type": "HERO"
+    "defense": 2
   },
   {
     "id": 59,
-    "name": "Vigilante del Fiume",
-    "attack": 4,
-    "defense": 0,
     "cost": 3,
+    "name": "Vigilante del Fiume",
+    "type": "HERO",
+    "image": "vigilante_del_fiume.jpg",
+    "attack": 4,
     "effect": "Effetto speciale per Vigilante del Fiume.",
-    "image": "vigilante_del_fiume.png",
-    "type": "HERO"
+    "defense": 0
   },
   {
     "id": 60,
-    "name": "Re dei Troll",
-    "attack": 8,
-    "defense": 6,
     "cost": 4,
+    "name": "Re dei Troll",
+    "type": "HERO",
+    "image": "re_dei_troll.jpg",
+    "attack": 8,
     "effect": "Effetto speciale per Re dei Troll.",
-    "image": "re_dei_troll.png",
-    "type": "HERO"
+    "defense": 6
   },
   {
     "id": 61,
-    "name": "Lama Ruggente",
-    "attack": 5,
-    "defense": 3,
     "cost": 4,
+    "name": "Lama Ruggente",
+    "type": "HERO",
+    "image": "lama_ruggente.jpg",
+    "attack": 5,
     "effect": "Effetto speciale per Lama Ruggente.",
-    "image": "lama_ruggente.png",
-    "type": "HERO"
+    "defense": 3
   },
   {
     "id": 62,
-    "name": "Maestro delle Lame",
-    "attack": 5,
-    "defense": 7,
     "cost": 7,
+    "name": "Maestro delle Lame",
+    "type": "HERO",
+    "image": "maestro_delle_lame.jpg",
+    "attack": 5,
     "effect": "Effetto speciale per Maestro delle Lame.",
-    "image": "maestro_delle_lame.png",
-    "type": "HERO"
+    "defense": 7
   },
   {
     "id": 63,
-    "name": "Golem Incantato",
-    "attack": 3,
-    "defense": 6,
     "cost": 2,
+    "name": "Golem Incantato",
+    "type": "HERO",
+    "image": "golem_incantato.jpg",
+    "attack": 3,
     "effect": "Effetto speciale per Golem Incantato.",
-    "image": "golem_incantato.png",
-    "type": "HERO"
+    "defense": 6
   },
   {
     "id": 64,
-    "name": "Mutaforma Antico",
-    "attack": 1,
-    "defense": 2,
     "cost": 3,
+    "name": "Mutaforma Antico",
+    "type": "HERO",
+    "image": "mutaforma_antico.jpg",
+    "attack": 1,
     "effect": "Effetto speciale per Mutaforma Antico.",
-    "image": "mutaforma_antico.png",
-    "type": "HERO"
+    "defense": 2
   },
   {
     "id": 65,
-    "name": "Pirati delle Nebbie",
-    "attack": 8,
-    "defense": 4,
     "cost": 6,
+    "name": "Pirati delle Nebbie",
+    "type": "HERO",
+    "image": "pirati_delle_nebbie.jpg",
+    "attack": 8,
     "effect": "Effetto speciale per Pirati delle Nebbie.",
-    "image": "pirati_delle_nebbie.png",
-    "type": "HERO"
+    "defense": 4
   },
   {
     "id": 66,
-    "name": "Fiamma Infernale",
-    "attack": 0,
-    "defense": 0,
     "cost": 7,
+    "name": "Fiamma Infernale",
+    "type": "MAGIC",
+    "image": "fiamma_infernale.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Fiamma Infernale.",
-    "image": "fiamma_infernale.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 67,
-    "name": "Tempesta Elettrica",
-    "attack": 0,
-    "defense": 0,
     "cost": 2,
+    "name": "Tempesta Elettrica",
+    "type": "MAGIC",
+    "image": "tempesta_elettrica.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Tempesta Elettrica.",
-    "image": "tempesta_elettrica.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 68,
-    "name": "Cura Divina",
-    "attack": 0,
-    "defense": 0,
     "cost": 3,
+    "name": "Cura Divina",
+    "type": "MAGIC",
+    "image": "cura_divina.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Cura Divina.",
-    "image": "cura_divina.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 69,
-    "name": "Scudo di Energia",
-    "attack": 0,
-    "defense": 0,
     "cost": 3,
+    "name": "Scudo di Energia",
+    "type": "MAGIC",
+    "image": "scudo_di_energia.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Scudo di Energia.",
-    "image": "scudo_di_energia.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 70,
-    "name": "Evocazione Spettrale",
-    "attack": 0,
-    "defense": 0,
     "cost": 3,
+    "name": "Evocazione Spettrale",
+    "type": "MAGIC",
+    "image": "evocazione_spettrale.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Evocazione Spettrale.",
-    "image": "evocazione_spettrale.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 71,
-    "name": "Raggio Congelante",
-    "attack": 0,
-    "defense": 0,
     "cost": 6,
+    "name": "Raggio Congelante",
+    "type": "MAGIC",
+    "image": "raggio_congelante.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Raggio Congelante.",
-    "image": "raggio_congelante.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 72,
-    "name": "Incubo Vivente",
-    "attack": 0,
-    "defense": 0,
     "cost": 6,
+    "name": "Incubo Vivente",
+    "type": "MAGIC",
+    "image": "incubo_vivente.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Incubo Vivente.",
-    "image": "incubo_vivente.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 73,
-    "name": "Sigillo di Protezione",
-    "attack": 0,
-    "defense": 0,
     "cost": 7,
+    "name": "Sigillo di Protezione",
+    "type": "MAGIC",
+    "image": "sigillo_di_protezione.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Sigillo di Protezione.",
-    "image": "sigillo_di_protezione.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 74,
-    "name": "Anello del Potere",
-    "attack": 0,
-    "defense": 0,
     "cost": 7,
+    "name": "Anello del Potere",
+    "type": "MAGIC",
+    "image": "anello_del_potere.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Anello del Potere.",
-    "image": "anello_del_potere.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 75,
-    "name": "Benedizione della Luna",
-    "attack": 0,
-    "defense": 0,
     "cost": 5,
+    "name": "Benedizione della Luna",
+    "type": "MAGIC",
+    "image": "benedizione_della_luna.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Benedizione della Luna.",
-    "image": "benedizione_della_luna.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 76,
-    "name": "Maleficio del Silenzio",
-    "attack": 0,
-    "defense": 0,
     "cost": 4,
+    "name": "Maleficio del Silenzio",
+    "type": "MAGIC",
+    "image": "maleficio_del_silenzio.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Maleficio del Silenzio.",
-    "image": "maleficio_del_silenzio.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 77,
-    "name": "Pozione della Vita",
-    "attack": 0,
-    "defense": 0,
     "cost": 7,
+    "name": "Pozione della Vita",
+    "type": "MAGIC",
+    "image": "pozione_della_vita.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Pozione della Vita.",
-    "image": "pozione_della_vita.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 78,
-    "name": "Teleportazione",
-    "attack": 0,
-    "defense": 0,
     "cost": 5,
+    "name": "Teleportazione",
+    "type": "MAGIC",
+    "image": "teleportazione.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Teleportazione.",
-    "image": "teleportazione.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 79,
-    "name": "Vortice Temporale",
-    "attack": 0,
-    "defense": 0,
     "cost": 3,
+    "name": "Vortice Temporale",
+    "type": "MAGIC",
+    "image": "vortice_temporale.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Vortice Temporale.",
-    "image": "vortice_temporale.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 80,
-    "name": "Veleno Mentale",
-    "attack": 0,
-    "defense": 0,
     "cost": 2,
+    "name": "Veleno Mentale",
+    "type": "MAGIC",
+    "image": "veleno_mentale.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Veleno Mentale.",
-    "image": "veleno_mentale.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 81,
-    "name": "Esplosione Solare",
-    "attack": 0,
-    "defense": 0,
     "cost": 5,
+    "name": "Esplosione Solare",
+    "type": "MAGIC",
+    "image": "esplosione_solare.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Esplosione Solare.",
-    "image": "esplosione_solare.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 82,
-    "name": "Muro di Fuoco",
-    "attack": 0,
-    "defense": 0,
     "cost": 2,
+    "name": "Muro di Fuoco",
+    "type": "MAGIC",
+    "image": "muro_di_fuoco.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Muro di Fuoco.",
-    "image": "muro_di_fuoco.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 83,
-    "name": "Rinascita",
-    "attack": 0,
-    "defense": 0,
     "cost": 7,
+    "name": "Rinascita",
+    "type": "MAGIC",
+    "image": "rinascita.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Rinascita.",
-    "image": "rinascita.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 84,
-    "name": "Catena d'Ombra",
-    "attack": 0,
-    "defense": 0,
     "cost": 5,
+    "name": "Catena d'Ombra",
+    "type": "MAGIC",
+    "image": "catena_d'ombra.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Catena d'Ombra.",
-    "image": "catena_d'ombra.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 85,
-    "name": "Globo del Caos",
-    "attack": 0,
-    "defense": 0,
     "cost": 6,
+    "name": "Globo del Caos",
+    "type": "MAGIC",
+    "image": "globo_del_caos.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Globo del Caos.",
-    "image": "globo_del_caos.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 86,
-    "name": "Richiamo della Natura",
-    "attack": 0,
-    "defense": 0,
     "cost": 5,
+    "name": "Richiamo della Natura",
+    "type": "MAGIC",
+    "image": "richiamo_della_natura.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Richiamo della Natura.",
-    "image": "richiamo_della_natura.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 87,
-    "name": "Sigillo di Distruzione",
-    "attack": 0,
-    "defense": 0,
     "cost": 6,
+    "name": "Sigillo di Distruzione",
+    "type": "MAGIC",
+    "image": "sigillo_di_distruzione.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Sigillo di Distruzione.",
-    "image": "sigillo_di_distruzione.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 88,
-    "name": "Illusione Fantasma",
-    "attack": 0,
-    "defense": 0,
     "cost": 7,
+    "name": "Illusione Fantasma",
+    "type": "MAGIC",
+    "image": "illusione_fantasma.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Illusione Fantasma.",
-    "image": "illusione_fantasma.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 89,
-    "name": "Barriera Eterna",
-    "attack": 0,
-    "defense": 0,
     "cost": 3,
+    "name": "Barriera Eterna",
+    "type": "MAGIC",
+    "image": "barriera_eterna.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Barriera Eterna.",
-    "image": "barriera_eterna.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 90,
-    "name": "Frammento del Tempo",
-    "attack": 0,
-    "defense": 0,
     "cost": 4,
+    "name": "Frammento del Tempo",
+    "type": "MAGIC",
+    "image": "frammento_del_tempo.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Frammento del Tempo.",
-    "image": "frammento_del_tempo.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 91,
-    "name": "Marchio del Destino",
-    "attack": 0,
-    "defense": 0,
     "cost": 2,
+    "name": "Marchio del Destino",
+    "type": "MAGIC",
+    "image": "marchio_del_destino.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Marchio del Destino.",
-    "image": "marchio_del_destino.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 92,
-    "name": "Urlo del Drago",
-    "attack": 0,
-    "defense": 0,
     "cost": 3,
+    "name": "Urlo del Drago",
+    "type": "MAGIC",
+    "image": "urlo_del_drago.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Urlo del Drago.",
-    "image": "urlo_del_drago.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 93,
-    "name": "Eco dell'Abisso",
-    "attack": 0,
-    "defense": 0,
     "cost": 7,
+    "name": "Eco dell'Abisso",
+    "type": "MAGIC",
+    "image": "eco_dell'abisso.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Eco dell'Abisso.",
-    "image": "eco_dell'abisso.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 94,
-    "name": "Tempesta Astrale",
-    "attack": 0,
-    "defense": 0,
     "cost": 6,
+    "name": "Tempesta Astrale",
+    "type": "MAGIC",
+    "image": "tempesta_astrale.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Tempesta Astrale.",
-    "image": "tempesta_astrale.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 95,
-    "name": "Fulmine Sacro",
-    "attack": 0,
-    "defense": 0,
     "cost": 4,
+    "name": "Fulmine Sacro",
+    "type": "MAGIC",
+    "image": "fulmine_sacro.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Fulmine Sacro.",
-    "image": "fulmine_sacro.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 96,
-    "name": "Grido del Nord",
-    "attack": 0,
-    "defense": 0,
     "cost": 5,
+    "name": "Grido del Nord",
+    "type": "MAGIC",
+    "image": "grido_del_nord.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Grido del Nord.",
-    "image": "grido_del_nord.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 97,
-    "name": "Stella Nera",
-    "attack": 0,
-    "defense": 0,
     "cost": 4,
+    "name": "Stella Nera",
+    "type": "MAGIC",
+    "image": "stella_nera.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Stella Nera.",
-    "image": "stella_nera.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 98,
-    "name": "Onda Curativa",
-    "attack": 0,
-    "defense": 0,
     "cost": 7,
+    "name": "Onda Curativa",
+    "type": "MAGIC",
+    "image": "onda_curativa.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Onda Curativa.",
-    "image": "onda_curativa.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 99,
-    "name": "Nebbia Ingannevole",
-    "attack": 0,
-    "defense": 0,
     "cost": 2,
+    "name": "Nebbia Ingannevole",
+    "type": "MAGIC",
+    "image": "nebbia_ingannevole.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Nebbia Ingannevole.",
-    "image": "nebbia_ingannevole.png",
-    "type": "MAGIC"
+    "defense": 0
   },
   {
     "id": 100,
-    "name": "Giudizio Finale",
-    "attack": 0,
-    "defense": 0,
     "cost": 6,
+    "name": "Giudizio Finale",
+    "type": "MAGIC",
+    "image": "giudizio_finale.jpg",
+    "attack": 0,
     "effect": "Effetto speciale per Giudizio Finale.",
-    "image": "giudizio_finale.png",
-    "type": "MAGIC"
+    "defense": 0
   }
 ]
