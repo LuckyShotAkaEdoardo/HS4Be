@@ -1,8 +1,19 @@
-// socketManager.js (rifattorizzato, centralizzazione matchmaking inclusa)
-
 import { Server } from "socket.io";
-import { handleMatchmaking2v2 } from "./matchmaking2v2.js";
-import { handleMatchmakingVsNpc } from "./matchmakingVsNpc.js";
+import {
+  triggerEffects,
+  emitPassiveTrigger,
+  registerPassiveEffects,
+  unregisterPassiveEffectsByCard,
+  clearPassiveEffects,
+  EffectTriggers,
+} from "./libs/effectEngine.js";
+
+import {
+  hasAbility,
+  canAttack,
+  handleDivineShield,
+  summonRandomHeroes,
+} from "./libs/card-helpers.js";
 
 let ioInstance;
 let games = {};
@@ -16,7 +27,6 @@ export const initializeSocket = (server) => {
   });
 
   ioInstance.on("connection", (socket) => {
-    console.log(`Giocatore connesso: ${socket.id}`);
     socket.emit("do-login");
 
     socket.on("login", ({ username }) => {
@@ -118,91 +128,157 @@ export const initializeSocket = (server) => {
       }
     });
 
-    socket.on("matchmaking-2v2", (data) =>
-      handleMatchmaking2v2(ioInstance, socket, games, data)
-    );
-    socket.on("matchmaking-vs-npc", () =>
-      handleMatchmakingVsNpc(ioInstance, socket, games)
-    );
-
     socket.on("play-card", ({ gameId, card }) => {
       const g = games[gameId];
       const username = socket.username;
-
       if (!g || !username || g.status === "ended") return;
-      if (username !== g.currentPlayerId) {
-        return socket.emit("error", "Non è il tuo turno");
-      }
+      if (username !== g.currentPlayerId) return;
       if (card.cost > (g.crystals[username] || 0)) {
-        return socket.emit(
-          "error",
-          "Non hai abbastanza cristalli per giocare questa carta."
-        );
+        return socket.emit("error", "Non hai abbastanza cristalli.");
       }
 
-      g.hands[username] = g.hands[username]?.filter((c) => c.id !== card.id);
-      g.crystals[username] = Math.max(
-        (g.crystals[username] || 0) - card.cost,
-        0
-      );
+      g.hands[username] = g.hands[username].filter((c) => c.id !== card.id);
+      g.crystals[username] -= card.cost;
 
       if (card.type === "HERO") {
         g.boards[username] = g.boards[username] || [];
-        if (g.boards[username].length < 6) {
-          g.boards[username].push({ ...card, justPlayed: true });
+        if (g.boards[username].length >= 6) {
+          g.hands[username].push(card); // rimetti in mano
+          g.crystals[username] += card.cost; // rimborsa
+          return socket.emit("error", "Hai già 6 carte sul campo.");
         }
+
+        g.boards[username].push({ ...card, justPlayed: true });
+
+        emitPassiveTrigger(EffectTriggers.ON_ENTER_BOARD, g, {
+          target: card.id,
+          source: username,
+        });
+
+        triggerEffects({
+          trigger: EffectTriggers.ON_PLAY,
+          game: g,
+          card,
+          source: username,
+          target: card.targetId ?? null,
+        });
+      } else if (card.type === "MAGIC") {
+        // Attivazione istantanea spell
+        triggerEffects({
+          trigger: EffectTriggers.ON_PLAY,
+          game: g,
+          card,
+          source: username,
+          target: card.targetId ?? null,
+        });
       }
 
+      if (card.effect && card.effect.trigger !== EffectTriggers.ON_PLAY) {
+        registerPassiveEffects(gameId, [
+          { effect: card.effect, card, owner: username },
+        ]);
+      }
+
+      emitPassiveTrigger(EffectTriggers.ON_CARD_PLAYED, g, {
+        target: card.id,
+        source: username,
+      });
+
+      checkVictoryConditions(gameId);
       emitSanitizedGameUpdate(ioInstance, g);
     });
 
     socket.on("attack", ({ gameId, attacker, target }) => {
       const g = games[gameId];
       const username = socket.username;
-      if (!g || !username || !attacker || !target || g.status === "ended")
-        return;
-      if (username !== g.currentPlayerId) {
-        return socket.emit("error", "Non è il tuo turno");
-      }
+      if (!g || !username || g.status === "ended") return;
+      if (username !== g.currentPlayerId) return;
+
       const board = g.boards[username] || [];
       const att = board.find((c) => c.id === attacker.id);
-      if (!att || att.justPlayed)
-        return socket.emit("error", "Non puoi attaccare");
+      if (!att || !canAttack(att, target, g, username)) return;
+
+      emitPassiveTrigger(EffectTriggers.ON_ATTACK, g, {
+        source: username,
+        target,
+        value: att.attack,
+      });
 
       if (target.type === "HERO") {
         const defBoard = g.boards[target.playerId] || [];
         const def = defBoard.find((c) => c.id === target.id);
         if (!def) return;
 
-        def.defense -= att.attack;
-        att.defense -= def.attack;
+        emitPassiveTrigger(EffectTriggers.ON_ATTACKED, g, {
+          source: username,
+          target: def.id,
+          value: att.attack,
+        });
 
-        g.boards[target.playerId] = defBoard
-          .map((c) => (c.id === def.id ? def : c))
-          .filter((c) => c.defense > 0);
-
-        g.boards[username] = board
-          .map((c) => (c.id === att.id ? att : c))
-          .filter((c) => c.defense > 0);
+        const shielded = handleDivineShield(def, att);
+        if (!shielded) {
+          def.defense -= att.attack;
+          att.defense -= def.attack;
+        }
+        if (!shielded && hasAbility(att, "LIFESTEAL") && att.attack > 0) {
+          g.health[username] = Math.min(
+            20,
+            (g.health[username] || 0) + att.attack
+          );
+        }
+        if (att.abilities?.includes("STEALTH")) {
+          att.abilities = att.abilities.filter((a) => a !== "STEALTH");
+        }
+        if (def.abilities?.includes("STEALTH")) {
+          def.abilities = def.abilities.filter((a) => a !== "STEALTH");
+        }
+        if (def.defense <= 0) {
+          unregisterPassiveEffectsByCard(gameId, def.id);
+          emitPassiveTrigger(EffectTriggers.ON_DEATH, g, {
+            target: def.id,
+            source: username,
+          });
+        }
+        if (att.defense <= 0) {
+          unregisterPassiveEffectsByCard(gameId, att.id);
+          emitPassiveTrigger(EffectTriggers.ON_DEATH, g, {
+            target: att.id,
+            source: username,
+          });
+        }
       } else if (target.type === "FACE") {
         g.health[target.playerId] -= att.attack;
+        if (hasAbility(att, "LIFESTEAL") && att.attack > 0) {
+          g.health[username] = Math.min(
+            20,
+            (g.health[username] || 0) + att.attack
+          );
+        }
+        emitPassiveTrigger(EffectTriggers.ON_DAMAGE_RECEIVED, g, {
+          target: target.playerId,
+          value: att.attack,
+        });
+
         if (g.health[target.playerId] <= 0) {
           endGame(gameId, username, target.playerId);
         }
       }
-
       const updatedAtt = g.boards[username]?.find((c) => c.id === att.id);
       if (updatedAtt) updatedAtt.justPlayed = true;
 
+      checkVictoryConditions(gameId); // <== qui pure
       emitSanitizedGameUpdate(ioInstance, g);
     });
 
     socket.on("end-turn", (gameId) => {
       const g = games[gameId];
       if (!g || g.status === "ended") return;
-      if (socket.username !== g.currentPlayerId) {
-        return socket.emit("error", "Non è il tuo turno");
-      }
+      if (socket.username !== g.currentPlayerId) return;
+
+      emitPassiveTrigger(EffectTriggers.ON_TURN_END, g, {
+        target: socket.username,
+      });
+
       g.currentTurnIndex = (g.currentTurnIndex + 1) % g.allPlayers.length;
       const current = g.allPlayers[g.currentTurnIndex];
       g.currentPlayerId = current;
@@ -210,21 +286,23 @@ export const initializeSocket = (server) => {
       g.maxCrystals[current] = Math.min((g.maxCrystals[current] || 0) + 1, 10);
       g.crystals[current] = g.maxCrystals[current];
 
+      emitPassiveTrigger(EffectTriggers.ON_DRAW_PHASE, g, {
+        target: current,
+      });
+
       const card = g.decks[current].shift();
-      if (card) {
-        g.hands[current].push(card);
+      if (card) g.hands[current].push(card);
+      const socketId = g.usernames[current];
+      if (socketId) {
+        ioInstance.to(socketId).emit("card-drawn", {
+          card,
+          deckLength: g.decks[current].length,
+        });
       }
-
-      g.allPlayers.forEach((p) => {
-        g.boards[p]?.forEach((c) => (c.justPlayed = false));
+      emitPassiveTrigger(EffectTriggers.ON_TURN_START, g, {
+        target: current,
       });
-
       emitSanitizedGameUpdate(ioInstance, g);
-
-      ioInstance.to(g.usernames[current]).emit("card-drawn", {
-        card,
-        deckLength: g.decks[current].length,
-      });
 
       ioInstance.to(g.id).emit("turn-update", {
         currentPlayerId: current,
@@ -246,24 +324,10 @@ export const initializeSocket = (server) => {
       const username = socket.username;
       if (usernameToSocketId[username] === socket.id) {
         delete usernameToSocketId[username];
-        const g = Object.values(games).find((g) =>
-          g.allPlayers?.includes(username)
-        );
-        if (g) {
-          const opponent = g.allPlayers.find((u) => u !== username);
-          disconnectTimeouts[username] = setTimeout(() => {
-            endGame(g.id, opponent, username);
-            delete disconnectTimeouts[username];
-          }, 30000); // ⏱️ 30 secondi
-        }
-      }
-      for (const g of Object.values(games)) {
-        if (g.usernames) delete g.usernames[username];
       }
     });
   });
 };
-
 function emitSanitizedGameUpdate(io, game) {
   game.allPlayers.forEach((username) => {
     const socketId = game.usernames[username];
@@ -459,4 +523,16 @@ export function logStatusAsText() {
   }
   output += `🎯 In matchmaking 1v1: ${matchmakingQueue1v1.length}`;
   return output;
+}
+function checkVictoryConditions(gameId) {
+  const g = games[gameId];
+  if (!g || g.status === "ended") return;
+
+  for (const player of g.allPlayers) {
+    if (g.health[player] <= 0) {
+      const winner = g.allPlayers.find((p) => p !== player);
+      endGame(gameId, winner, player);
+      break;
+    }
+  }
 }
