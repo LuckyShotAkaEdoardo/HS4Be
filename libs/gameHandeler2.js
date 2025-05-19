@@ -50,10 +50,10 @@ export async function handlePlayCard({
       Math.min(index ?? g.boards[userId].length, g.boards[userId].length)
     );
 
-    for (const c of g.boards[userId] || []) {
-      if (c.frozenFor && c.frozenFor > 0) c.frozenFor--;
-      if (c.stunnedFor && c.stunnedFor > 0) c.stunnedFor--;
-    }
+    // for (const c of g.boards[userId] || []) {
+    //   if (c.frozenFor && c.frozenFor > 0) c.frozenFor--;
+    //   if (c.stunnedFor && c.stunnedFor > 0) c.stunnedFor--;
+    // }
     g.boards[userId].splice(insertIndex, 0, {
       ...realCard,
       restingUntilTurn: g.currentTurn + 1,
@@ -274,8 +274,8 @@ export function handleEndTurn({ gameId, userId, games }) {
   for (const c of g.boards[current] || []) {
     const needsRest =
       c.restingUntilTurn != null && c.restingUntilTurn > g.currentTurn;
-    c.canAttack =
-      !needsRest || hasAbility(c, "CHARGE") || hasAbility(c, "RUSH");
+    // c.canAttack =
+    //   !needsRest || hasAbility(c, "CHARGE") || hasAbility(c, "RUSH");
   }
   // Aumenta il turno globale solo quando si completa un ciclo
   if (g.currentTurnIndex === 0) {
@@ -287,7 +287,12 @@ export function handleEndTurn({ gameId, userId, games }) {
   // for (const c of g.boards[current] || []) {
   //   c.justPlayed = false;
   // }
+  for (const c of g.boards[current] || []) {
+    c.hasAttackedThisTurn = false;
 
+    if (c.frozenFor && c.frozenFor > 0) c.frozenFor--;
+    if (c.stunnedFor && c.stunnedFor > 0) c.stunnedFor--;
+  }
   return {
     game: g,
     nextPlayer: current,

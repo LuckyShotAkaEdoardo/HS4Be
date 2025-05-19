@@ -342,7 +342,7 @@ export async function getRandomCards({ count, mode = "deck", type = "ALL" }) {
     );
   }
 
-  return result;
+  return assignUniqueIds(result);
 }
 
 export function addVisualEvent(game, event) {

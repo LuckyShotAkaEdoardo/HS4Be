@@ -7,11 +7,7 @@ export async function getSelectedDeckAndFrame(userId) {
   const id = extractUserId(userId);
 
   const result = await pool.query(
-    `
-    SELECT decks
-    FROM decks
-    WHERE id = $1
-  `,
+    `SELECT decks FROM decks WHERE user_id = $1`,
     [id]
   );
 

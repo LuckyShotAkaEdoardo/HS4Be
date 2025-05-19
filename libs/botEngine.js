@@ -1,6 +1,11 @@
-import { emitSanitizedGameUpdate } from "./gameUtils.js";
-import { handleEndTurn } from "./gameHandeler2.js";
 import { getRandomCards } from "./gameUtils.js";
+import {
+  handlePlayCard,
+  handleAttack,
+  handleEndTurn,
+} from "./gameHandeler2.js";
+import { emitSanitizedGameUpdate } from "./gameUtils.js";
+import { canAttack } from "./card-helpers.js";
 
 export async function generateBotDeck() {
   try {
@@ -9,55 +14,104 @@ export async function generateBotDeck() {
       mode: "deck",
       type: "HERO",
     });
-    console.log("GUARDA DECK", deck);
     return deck;
   } catch (err) {
-    console.error("Errore nella generazione del mazzo bot:", err.message);
+    console.error("Errore nella generazione mazzo bot:", err.message);
     return [];
   }
 }
 
-export function simulateBotMove(gameId, botId, games, io) {
+export async function simulateBotMove(gameId, botId, games, ioInstance) {
   const game = games[gameId];
   if (!game || game.status === "ended") return;
 
-  const hand = game.hands[botId] || [];
-  const crystals = game.crystals[botId] || 0;
-  const board = game.boards[botId] || [];
-  const enemyId = game.allPlayers.find((u) => u !== botId);
-
-  // Prova a giocare una carta
-  const playable = hand.find((c) => c.cost <= crystals);
-  if (playable) {
-    const withId = { ...playable, id: Date.now() + Math.random() };
-    game.hands[botId] = hand.filter((c) => c !== playable);
-    board.push(withId);
+  if (game.currentPlayerId !== botId) {
+    console.log(`[BOT] Non è il turno del bot. Esco.`);
+    return;
   }
 
-  // Prova ad attaccare (uno solo per semplicità)
-  // const targets = game.boards[enemyId] || [];
-  // if (board.length && targets.length) {
-  //   const attacker = board[0];
-  //   const target = targets[0];
-  //   target.defense -= attacker.attack;
-  //   attacker.defense -= target.attack;
-  // }
+  const fakeSocket = {
+    id: game.userSockets[botId],
+    userId: botId,
+    username: "BOT",
+    emit: () => {},
+  };
 
-  // Fine turno
-  const result = handleEndTurn({ gameId, userId: botId, games });
+  try {
+    const hand = game.hands[botId] || [];
+    const crystals = game.crystals[botId] || 0;
+    const board = game.boards[botId] || [];
+    const enemyId = game.allPlayers.find((u) => u !== botId);
+    const enemyBoard = game.boards[enemyId] || [];
 
-  console.log(result, "end:turn");
+    // ▶️ 1. Gioca una carta se possibile
+    const cardToPlay = hand.find((c) => c.cost <= crystals);
+    if (cardToPlay) {
+      await handlePlayCard({
+        gameId,
+        card: cardToPlay,
+        index: board.length,
+        userId: botId,
+        games,
+        ioInstance,
+      });
+    }
 
-  if (!result?.game) return;
+    // ⚔️ 2. Attacca se può
+    const possibleTarget = enemyBoard.find((c) => c.defense > 0) || {
+      type: "FACE",
+      playerId: enemyId,
+    };
 
-  emitSanitizedGameUpdate(io, result.game);
-  io.to(result.game.id).emit("turn-update", {
-    currentPlayerId: result.nextPlayer,
-    crystals: result.game.crystals[result.nextPlayer],
-  });
+    const attacker = game.boards[botId]?.find((c) =>
+      canAttack(c, possibleTarget, game, botId)
+    );
 
-  // Se tocca ancora al bot → mossa successiva
-  if (result.nextPlayer === botId) {
-    setTimeout(() => simulateBotMove(gameId, botId, games, io), 1000);
+    if (attacker) {
+      await handleAttack({
+        gameId,
+        attacker,
+        target: possibleTarget,
+        userId: botId,
+        games,
+        ioInstance,
+      });
+    }
+
+    // 🕒 3. Passa il turno dopo un breve delay
+    setTimeout(() => {
+      const result = handleEndTurn({ gameId, userId: botId, games });
+      if (result?.error) {
+        console.error("[BOT] Errore passando il turno:", result.error);
+        return;
+      }
+
+      const { socketId, drawnCard, deckLength, nextPlayer, game } = result;
+
+      emitSanitizedGameUpdate(ioInstance, game);
+
+      ioInstance.to(game.id).emit("turn-update", {
+        currentPlayerId: nextPlayer,
+        crystals: game.crystals[nextPlayer],
+      });
+
+      if (socketId) {
+        const frame = game.frames?.[nextPlayer] || "";
+        ioInstance.to(socketId).emit("card-drawn", {
+          card: drawnCard,
+          frame,
+          deckLength,
+        });
+      }
+
+      // Se il turno è ancora del bot, ricomincia
+      if (nextPlayer?.startsWith("bot:")) {
+        setTimeout(() => {
+          simulateBotMove(gameId, nextPlayer, games, ioInstance);
+        }, 1000);
+      }
+    }, 1000);
+  } catch (err) {
+    console.error("[BOT] Errore durante simulateBotMove:", err);
   }
 }

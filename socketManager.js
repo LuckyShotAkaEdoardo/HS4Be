@@ -124,7 +124,7 @@ export const initializeSocket = (server) => {
           const botUsername = `bot:${Math.floor(Math.random() * 1000)}`;
           const botSocket = { id: `bot:${userId}` };
           const botFrame = "teck.png";
-          const botDeck = assignUniqueIds(await generateBotDeck());
+          const botDeck = await generateBotDeck();
 
           const { game, sockets } = createGame1v1(
             userId,

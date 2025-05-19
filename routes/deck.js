@@ -84,9 +84,12 @@ router.put("/:username", async (req, res) => {
     }
 
     const userId = userRes.rows[0].id;
-
+    const sanitizedDecks = decks.map((d) => ({
+      ...d,
+      isSelected: d.isSelected === true, // forza a booleano o false
+    }));
     const result = await pool.query(updateQuery, [
-      JSON.stringify(decks),
+      JSON.stringify(sanitizedDecks),
       userId,
     ]);
 

@@ -19,10 +19,14 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app); // ✅ necessario per socket.io
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: "*", // o una whitelist se vuoi limitare
+    credentials: true,
+  })
+);
 app.use("/images", express.static("images"));
 
-app.use(cors());
 app.use(express.json());
 app.use("/auth", authRoutes);
 app.use("/api", cardRoutes);
