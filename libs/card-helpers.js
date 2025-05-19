@@ -1,23 +1,42 @@
-// cardHelpers.js
+import { getRandomCards } from "./gameUtils.js";
 
 export function hasAbility(card, ability) {
   return card.abilities?.includes(ability);
 }
 
-export function canAttack(attacker, target, game, username) {
-  if (
-    attacker.justPlayed &&
-    !hasAbility(attacker, "CHARGE") &&
-    !hasAbility(attacker, "RUSH")
-  )
-    return false;
-  if (hasAbility(attacker, "RUSH") && target.type === "FACE") return false;
-  if (target.type === "FACE") {
-    const opponent = game.allPlayers.find((u) => u !== username);
-    const enemyBoard = game.boards[opponent] || [];
+export function canAttack(attacker, target, game, userId) {
+  if (!attacker || !game || !userId) return false;
+
+  // 🛡️ Non può attaccare se è morto
+  if (attacker.defense <= 0) return false;
+
+  // ❌ Se ha già attaccato in questo turno
+  if (attacker.hasAttackedThisTurn) return false;
+
+  // 🔁 Se è in "quiete" (cioè appena evocato), blocca l'attacco
+  const needsRest =
+    attacker.restingUntilTurn != null &&
+    attacker.restingUntilTurn > (game.currentTurn ?? 0);
+
+  const hasCharge = hasAbility(attacker, "CHARGE");
+  const hasRush = hasAbility(attacker, "RUSH");
+
+  if (needsRest && !hasCharge && !hasRush) return false;
+
+  // ❄️ Effetti di controllo
+  if (attacker.frozenFor > 0 || attacker.stunnedFor > 0) return false;
+
+  // 🚫 Rush non può attaccare il FACE
+  if (hasRush && target?.type === "FACE") return false;
+
+  // 🧱 Se attacca il FACE e ci sono WALL nemici, blocca
+  if (target?.type === "FACE") {
+    const opponentId = game.allPlayers.find((u) => u !== userId);
+    const enemyBoard = game.boards[opponentId] || [];
     const wallExists = enemyBoard.some((c) => hasAbility(c, "WALL"));
     if (wallExists) return false;
   }
+
   return true;
 }
 
@@ -32,23 +51,24 @@ export function handleDivineShield(defender, attacker) {
   return false;
 }
 
-export function summonRandomHeroes(game, owner, count, from = "deck") {
-  const pool = game[from]?.[owner] || [];
-  const heroes = pool.filter((c) => c.type === "HERO");
-  const selected = shuffle([...heroes]).slice(0, count);
+export async function summonRandomHeroes(game, userId, count = 1) {
+  const randomCards = await getRandomCards({
+    count,
+    mode: "summon",
+    type: "HERO",
+  });
 
-  game.boards[owner] = game.boards[owner] || [];
-  for (const card of selected) {
-    card.justPlayed = true;
-    game.boards[owner].push(card);
+  for (const card of randomCards) {
+    if ((game.boards[userId]?.length || 0) >= 6) break;
+    game.boards[userId].push(card);
   }
-  game[from][owner] = pool.filter((c) => !selected.includes(c));
 }
-
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
+export function extractUsername(internalId) {
+  const parts = internalId.split("---");
+  parts.pop(); // Rimuove l'ultimo elemento (userId)
+  return parts.join("---"); // Ricostruisce lo username
+}
+export function extractUserId(internalId) {
+  const parts = internalId.split("---");
+  return parseInt(parts[parts.length - 1], 10);
 }

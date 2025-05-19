@@ -16,7 +16,7 @@ router.get("/cards", async (req, res) => {
   `;
     const result = await pool.query(sql);
     const cards = result.rows[0].cardList;
-    console.log(cards);
+
     res.json(cards);
   } catch (err) {
     console.error("Errore nel recupero carte:", err);
