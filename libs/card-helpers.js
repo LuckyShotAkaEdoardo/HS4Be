@@ -5,15 +5,21 @@ export function hasAbility(card, ability) {
 }
 
 export function canAttack(attacker, target, game, userId) {
-  if (!attacker || !game || !userId) return false;
+  if (!attacker || !game || !userId) {
+    console.log("[BLOCK] Dati incompleti");
+    return { allowed: false, reason: "Dati incompleti" };
+  }
 
-  // 🛡️ Non può attaccare se è morto
-  if (attacker.defense <= 0) return false;
+  if (attacker.defense <= 0) {
+    console.log("[BLOCK] Carta morta");
+    return { allowed: false, reason: "La carta è morta" };
+  }
 
-  // ❌ Se ha già attaccato in questo turno
-  if (attacker.hasAttackedThisTurn) return false;
+  if (attacker.hasAttackedThisTurn) {
+    console.log("[BLOCK] Ha già attaccato");
+    return { allowed: false, reason: "Ha già attaccato in questo turno" };
+  }
 
-  // 🔁 Se è in "quiete" (cioè appena evocato), blocca l'attacco
   const needsRest =
     attacker.restingUntilTurn != null &&
     attacker.restingUntilTurn > (game.currentTurn ?? 0);
@@ -21,23 +27,47 @@ export function canAttack(attacker, target, game, userId) {
   const hasCharge = hasAbility(attacker, "CHARGE");
   const hasRush = hasAbility(attacker, "RUSH");
 
-  if (needsRest && !hasCharge && !hasRush) return false;
+  if (needsRest && !hasCharge && !hasRush) {
+    console.log(`[BLOCK] In quiete fino al turno ${attacker.restingUntilTurn}`);
+    return {
+      allowed: false,
+      reason: `È in quiete fino al turno ${attacker.restingUntilTurn}`,
+    };
+  }
 
-  // ❄️ Effetti di controllo
-  if (attacker.frozenFor > 0 || attacker.stunnedFor > 0) return false;
+  if (attacker.frozenFor > 0) {
+    console.log("[BLOCK] Congelata");
+    return { allowed: false, reason: "È congelata" };
+  }
 
-  // 🚫 Rush non può attaccare il FACE
-  if (hasRush && target?.type === "FACE") return false;
+  if (attacker.stunnedFor > 0) {
+    console.log("[BLOCK] Stordita");
+    return { allowed: false, reason: "È stordita" };
+  }
 
-  // 🧱 Se attacca il FACE e ci sono WALL nemici, blocca
+  if (hasRush && target?.type === "FACE") {
+    console.log("[BLOCK] RUSH vs FACE");
+    return {
+      allowed: false,
+      reason: "RUSH può attaccare solo creature",
+    };
+  }
+
   if (target?.type === "FACE") {
     const opponentId = game.allPlayers.find((u) => u !== userId);
     const enemyBoard = game.boards[opponentId] || [];
     const wallExists = enemyBoard.some((c) => hasAbility(c, "WALL"));
-    if (wallExists) return false;
+    if (wallExists) {
+      console.log("[BLOCK] WALL nemico presente");
+      return {
+        allowed: false,
+        reason: "Il FACE è protetto da un WALL nemico",
+      };
+    }
   }
 
-  return true;
+  console.log("[OK] Può attaccare");
+  return { allowed: true };
 }
 
 export function handleDivineShield(defender, attacker) {

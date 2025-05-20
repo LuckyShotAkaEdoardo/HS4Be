@@ -129,10 +129,10 @@ export function handleAttack({
   const realAttacker = myBoard.find((c) => c.id === attacker.id);
   if (!realAttacker) return { error: "Attaccante non valido" };
 
-  if (!canAttack(realAttacker, target, g, userId)) {
-    return { error: "Questa carta non può attaccare ora" };
+  const { allowed, reason } = canAttack(realAttacker, target, g, userId);
+  if (!allowed) {
+    return { error: reason || "Questa pedina non può attaccare questo turno" };
   }
-
   emitPassiveTrigger(EffectTriggers.ON_ATTACK, g, {
     source: userId,
     target,
@@ -278,9 +278,9 @@ export function handleEndTurn({ gameId, userId, games }) {
     //   !needsRest || hasAbility(c, "CHARGE") || hasAbility(c, "RUSH");
   }
   // Aumenta il turno globale solo quando si completa un ciclo
-  if (g.currentTurnIndex === 0) {
-    g.currentTurn = (g.currentTurn ?? 0) + 1;
-  }
+  // if (g.currentTurnIndex === 0) {
+  //   g.currentTurn = (g.currentTurn ?? 0) + 1;
+  // }
 
   emitPassiveTrigger(EffectTriggers.ON_TURN_START, g, { target: current });
 
