@@ -354,7 +354,7 @@ export const initializeSocket = (server) => {
             // });
           }
         }
-      }, 30000);
+      }, 120000);
     });
   });
 };
