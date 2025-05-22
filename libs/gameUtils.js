@@ -92,7 +92,10 @@ export function endGame(gameId, games, ioInstance, winnerId, loserId) {
 
   const winnerSocketId = game.userSockets[winnerId];
   const loserSocketId = game.userSockets[loserId];
-
+  console.log(`[ENDGAME] winnerId=${winnerId}, loserId=${loserId}`);
+  console.log(
+    `[ENDGAME] winnerSocketId=${winnerSocketId}, loserSocketId=${loserSocketId}`
+  );
   if (winnerSocketId) {
     ioInstance.to(winnerSocketId).emit("you-won", {
       message: "Hai vinto la partita!",

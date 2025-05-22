@@ -15,6 +15,8 @@ import {
 import { generateBotDeck, simulateBotMove } from "./libs/botEngine.js";
 import { getSelectedDeckAndFrame } from "./libs/deck-service.js";
 import jwt from "jsonwebtoken";
+import { endGame } from "./libs/gameUtils.js"; // assicurati che sia importato
+
 getSelectedDeckAndFrame;
 
 let ioInstance;
@@ -298,28 +300,21 @@ export const initializeSocket = (server) => {
       if (!g || !userId) return;
       const opponent = g.userIds.find((u) => u !== userId);
       if (opponent) {
-        const endGame = (gid, winner, loser) => {
-          const game = games[gid];
-          if (!game || game.status === "ended") return;
-
-          game.status = "ended";
-
-          const winnerSocketId = game.userSockets[winner];
-          const loserSocketId = game.userSockets[loser];
-
-          if (winnerSocketId)
-            ioInstance
-              .to(winnerSocketId)
-              .emit("you-won", { message: "Hai vinto la partita!" });
-          if (loserSocketId)
-            ioInstance
-              .to(loserSocketId)
-              .emit("you-lost", { message: "Hai perso la partita!" });
-
-          ioInstance.to(game.id).emit("game-over", { winner, loser });
-        };
-        endGame(gameId, opponent, userId);
+        endGame(gameId, games, ioInstance, opponent, userId);
       }
+    });
+    socket.on("cancel-matchmaking", () => {
+      const userId = socket.userId;
+      if (!userId) return;
+
+      for (const mode in matchmakingQueues) {
+        matchmakingQueues[mode] = matchmakingQueues[mode].filter(
+          (entry) => entry.userId !== userId
+        );
+      }
+
+      console.log(`[MATCHMAKING] ${userId} ha annullato la coda`);
+      socket.emit("matchmaking-cancelled", true);
     });
 
     socket.on("disconnect", () => {
@@ -352,10 +347,11 @@ export const initializeSocket = (server) => {
           delete games[gameId];
 
           if (opponentSocket?.connected) {
-            opponentSocket.emit("game-ended", {
-              reason: "opponent-left",
-              winner: opponent,
-            });
+            endGame(gameId, games, ioInstance, opponent, userId);
+            // opponentSocket.emit("game-ended", {
+            //   reason: "opponent-left",
+            //   winner: opponent,
+            // });
           }
         }
       }, 30000);
