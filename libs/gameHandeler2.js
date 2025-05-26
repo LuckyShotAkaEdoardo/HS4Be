@@ -110,9 +110,19 @@ export async function handlePlayCard({
     endGame(gid, games, ioInstance, w, l)
   );
 
-  return { game: g };
+  return {
+    game: g,
+    log: {
+      type: "PLAY_CARD",
+      actor: userId,
+      details: {
+        cardId: realCard.id,
+        cardName: realCard.name,
+        index,
+      },
+    },
+  };
 }
-
 export function handleAttack({
   gameId,
   attacker,
@@ -234,7 +244,17 @@ export function handleAttack({
     endGame(gid, games, ioInstance, w, l)
   );
 
-  return { game: g };
+  return {
+    game: g,
+    log: {
+      type: "ATTACK",
+      actor: userId,
+      details: {
+        attackerId: attacker.id,
+        targetId: target.id,
+      },
+    },
+  };
 }
 
 export function handleEndTurn({ gameId, userId, games }) {
@@ -295,9 +315,16 @@ export function handleEndTurn({ gameId, userId, games }) {
   }
   return {
     game: g,
-    nextPlayer: current,
-    drawnCard: card,
-    deckLength: g.decks[current]?.length ?? 0,
-    socketId: g.userSockets[current],
+    log: {
+      type: "END_TURN",
+      actor: userId,
+      details: {
+        nextPlayer: g.currentPlayerId, // ✅ usa il valore già aggiornato
+        turn: g.currentTurn,
+      },
+    },
+    effects: {
+      drawnCard: card ?? null,
+    },
   };
 }

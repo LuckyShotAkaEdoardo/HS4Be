@@ -5,7 +5,8 @@ import {
   emitSanitizedGameUpdate,
   createGame1v1,
   sharedGameView,
-  assignUniqueIds,
+  endGame,
+  finalizeGameUpdate,
 } from "./libs/gameUtils.js";
 import {
   handlePlayCard,
@@ -15,7 +16,7 @@ import {
 import { generateBotDeck, simulateBotMove } from "./libs/botEngine.js";
 import { getSelectedDeckAndFrame } from "./libs/deck-service.js";
 import jwt from "jsonwebtoken";
-import { endGame } from "./libs/gameUtils.js"; // assicurati che sia importato
+// assicurati che sia importato
 
 getSelectedDeckAndFrame;
 
@@ -140,6 +141,7 @@ export const initializeSocket = (server) => {
           );
 
           games[game.id] = game;
+          game.history = [];
           socket.join(game.id);
           socket.emit("player-id", userId);
           socket.emit("game-started", sharedGameView(game, userId));
@@ -204,6 +206,8 @@ export const initializeSocket = (server) => {
             `🟢 Match avviato tra ${first.username} e ${second.username}`
           );
           console.log("✅ Partita creata:", game.id);
+          game.initialState = serializeGame(game); // snapshot iniziale
+          game.history = [];
           console.log("📦 Stato globale:", Object.keys(games));
           [first, second].forEach((p) => {
             const sock = sockets[p.userId];
@@ -230,54 +234,108 @@ export const initializeSocket = (server) => {
 
     socket.on("play-card", ({ gameId, cardId, index }) => {
       if (throttleAction(socket)) return;
-      const userId = socket.userId;
-      const g = games[gameId];
-      if (!g) return socket.emit("error", "Partita non trovata");
 
-      const card = g.hands[userId]?.find((c) => c.id === cardId);
+      const userId = socket.userId;
+      const game = games[gameId];
+      if (!game) return socket.emit("error", "Partita non trovata");
+
+      const card = game.hands[userId]?.find((c) => c.id === cardId);
       if (!card)
         return socket.emit("error", "Carta non trovata nella tua mano");
 
       wrapSafeAction(
         socket,
-        ({ gameId, card }) =>
-          handlePlayCard({ gameId, card, index, userId, games, ioInstance }),
+        async ({ gameId, card }) => {
+          const result = await handlePlayCard({
+            gameId,
+            card,
+            index,
+            userId,
+            games,
+            ioInstance, // 🔐 lasciato per usi interni nel motore
+          });
+
+          if (result?.game) {
+            await finalizeGameUpdate({
+              game: result.game,
+              ioInstance,
+              log: result.log,
+            });
+          }
+
+          return result;
+        },
         { gameId, card }
       );
     });
 
     socket.on("attack", async ({ gameId, attacker, target }) => {
       if (throttleAction(socket)) return;
+
       const userId = socket.userId;
-      await wrapSafeAction(
+
+      wrapSafeAction(
         socket,
-        ({ gameId, attacker, target }) =>
-          handleAttack({
+        async ({ gameId, attacker, target }) => {
+          const result = await handleAttack({
             gameId,
             attacker,
             target,
             userId,
             games,
-            ioInstance,
-          }),
+            ioInstance, // 🔒 mantenuto per logiche interne (es. win/lose)
+          });
+
+          if (result?.game) {
+            await finalizeGameUpdate({
+              game: result.game,
+              ioInstance,
+              log: result.log,
+            });
+          }
+
+          return result;
+        },
         { gameId, attacker, target }
       );
     });
 
     socket.on("end-turn", (gameId) => {
       if (throttleAction(socket)) return;
+
       const userId = socket.userId;
-      const result = handleEndTurn({ gameId, userId, games });
+      const result = handleEndTurn({
+        gameId,
+        userId,
+        games,
+        ioInstance,
+      });
+
       if (result?.error) return socket.emit("error", result.error);
 
-      const { socketId, drawnCard, deckLength, nextPlayer, game } = result;
+      // ✅ aggiorna lo stato e registra log
+      finalizeGameUpdate({
+        game: result.game,
+        ioInstance,
+        log: result.log,
+      });
 
-      emitSanitizedGameUpdate(ioInstance, game);
+      // 🔁 Calcoli derivati dopo aver aggiornato il game
+      const game = result.game;
+      const nextPlayer = game.currentPlayerId;
+      const socketId = game.userSockets?.[nextPlayer];
+      const drawnCard = result.effects?.drawnCard ?? null;
+      const deckLength = game.decks[nextPlayer]?.length ?? 0;
+      const frame = game.frames?.[nextPlayer] ?? "";
+
+      // 🔔 Aggiorna chi deve giocare
       ioInstance.to(game.id).emit("turn-update", {
         currentPlayerId: nextPlayer,
         crystals: game.crystals[nextPlayer],
       });
-      if (socketId) {
+
+      // 🃏 Invia la carta pescata solo al giocatore che ha pescato
+      if (socketId && drawnCard) {
         const frame = game.frames?.[nextPlayer] || "";
 
         ioInstance.to(socketId).emit("card-drawn", {
@@ -287,6 +345,7 @@ export const initializeSocket = (server) => {
         });
       }
 
+      // 🤖 Attiva bot se necessario
       if (typeof nextPlayer === "string" && nextPlayer.startsWith("bot:")) {
         setTimeout(() => {
           simulateBotMove(gameId, nextPlayer, games, ioInstance);
@@ -479,6 +538,8 @@ function startNewGameForPlayer(socket, game, userId) {
     socket.emit("game-started", view);
 
     emitSanitizedGameUpdate(ioInstance, game);
+
+    socket.emit("history-data", [...(game.history || [])]);
 
     socket.emit("turn-update", {
       currentPlayerId: game.currentPlayerId,

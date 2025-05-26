@@ -4,7 +4,7 @@ import {
   handleAttack,
   handleEndTurn,
 } from "./gameHandeler2.js";
-import { emitSanitizedGameUpdate } from "./gameUtils.js";
+import { emitSanitizedGameUpdate, finalizeGameUpdate } from "./gameUtils.js";
 import { canAttack } from "./card-helpers.js";
 
 export async function generateBotDeck() {
@@ -30,13 +30,6 @@ export async function simulateBotMove(gameId, botId, games, ioInstance) {
     return;
   }
 
-  const fakeSocket = {
-    id: game.userSockets[botId],
-    userId: botId,
-    username: "BOT",
-    emit: () => {},
-  };
-
   try {
     const hand = game.hands[botId] || [];
     const crystals = game.crystals[botId] || 0;
@@ -47,7 +40,7 @@ export async function simulateBotMove(gameId, botId, games, ioInstance) {
     // ▶️ 1. Gioca una carta se possibile
     const cardToPlay = hand.find((c) => c.cost <= crystals);
     if (cardToPlay) {
-      await handlePlayCard({
+      const result = await handlePlayCard({
         gameId,
         card: cardToPlay,
         index: board.length,
@@ -55,6 +48,16 @@ export async function simulateBotMove(gameId, botId, games, ioInstance) {
         games,
         ioInstance,
       });
+
+      if (result?.game) {
+        await finalizeGameUpdate({
+          game: result.game,
+          ioInstance,
+          log: result.log,
+        });
+
+        emitSanitizedGameUpdate(ioInstance, result.game); // 👈 aggiorna client dopo azione visibile
+      }
     }
 
     // ⚔️ 2. Attacca se può
@@ -68,7 +71,7 @@ export async function simulateBotMove(gameId, botId, games, ioInstance) {
     );
 
     if (attacker) {
-      await handleAttack({
+      const result = await handleAttack({
         gameId,
         attacker,
         target: possibleTarget,
@@ -76,27 +79,50 @@ export async function simulateBotMove(gameId, botId, games, ioInstance) {
         games,
         ioInstance,
       });
+
+      if (result?.game) {
+        await finalizeGameUpdate({
+          game: result.game,
+          ioInstance,
+          log: result.log,
+        });
+
+        emitSanitizedGameUpdate(ioInstance, result.game); // 👈 aggiorna client dopo attacco
+      }
     }
 
     // 🕒 3. Passa il turno dopo un breve delay
     setTimeout(() => {
-      const result = handleEndTurn({ gameId, userId: botId, games });
+      const result = handleEndTurn({
+        gameId,
+        userId: botId,
+        games,
+        ioInstance,
+      });
+
       if (result?.error) {
         console.error("[BOT] Errore passando il turno:", result.error);
         return;
       }
-
-      const { socketId, drawnCard, deckLength, nextPlayer, game } = result;
-
       emitSanitizedGameUpdate(ioInstance, game);
-
-      ioInstance.to(game.id).emit("turn-update", {
-        currentPlayerId: nextPlayer,
-        crystals: game.crystals[nextPlayer],
+      finalizeGameUpdate({
+        game: result.game,
+        ioInstance,
+        log: result.log,
       });
 
-      if (socketId) {
-        const frame = game.frames?.[nextPlayer] || "";
+      const nextPlayer = result.game.currentPlayerId;
+      const socketId = result.game.userSockets?.[nextPlayer];
+      const frame = result.game.frames?.[nextPlayer] ?? "";
+      const deckLength = result.game.decks[nextPlayer]?.length ?? 0;
+      const drawnCard = result.effects?.drawnCard ?? null;
+
+      ioInstance.to(result.game.id).emit("turn-update", {
+        currentPlayerId: nextPlayer,
+        crystals: result.game.crystals[nextPlayer],
+      });
+
+      if (socketId && drawnCard) {
         ioInstance.to(socketId).emit("card-drawn", {
           card: drawnCard,
           frame,

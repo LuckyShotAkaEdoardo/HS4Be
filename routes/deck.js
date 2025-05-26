@@ -213,7 +213,9 @@ router.get("/init/:username", async (req, res) => {
 // 🔹 READ ALL - GET /cards
 router.get("/allcard", async (req, res) => {
   try {
-    const cards = await Card.find();
+    const cards = await Card.find({
+      isVisibile: true,
+    }).lean();
 
     res.json(cards);
   } catch (err) {
@@ -240,7 +242,9 @@ router.get("/random/:count", async (req, res) => {
   }
 
   try {
-    const filter = type === "ALL" ? {} : { type };
+    const filter =
+      type === "ALL" ? { isVisibile: true } : { type, isVisibile: true };
+
     const cards = await Card.find(filter); // recupera solo il tipo richiesto
     if (!cards.length) {
       return res.status(500).json({ error: `Nessuna carta ${type} trovata` });

@@ -191,8 +191,8 @@ const effectHandlers = {
   TAUNT: ({ game, target }) => {
     for (const uid of game.userIds) {
       const card = game.boards[uid]?.find((c) => c.id === target);
-      if (card && !card.abilities.includes("WALL")) {
-        card.abilities.push("WALL");
+      if (card && !card.abilities.includes("TAUNT")) {
+        card.abilities.push("TAUNT");
       }
     }
   },

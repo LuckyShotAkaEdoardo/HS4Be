@@ -45,7 +45,10 @@ export async function getSelectedDeckAndFrame(userId) {
 
   const objectIds = selected.cards.map((id) => new mongoose.Types.ObjectId(id));
 
-  const cardObjects = await Card.find({ _id: { $in: objectIds } }).lean();
+  const cardObjects = await Card.find({
+    _id: { $in: objectIds },
+    isVisibile: true,
+  }).lean();
 
   const cardsOrdered = [];
   for (const id of selected.cards) {

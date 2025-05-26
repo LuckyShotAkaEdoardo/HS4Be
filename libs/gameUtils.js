@@ -300,7 +300,9 @@ export async function getRandomCards({ count, mode = "deck", type = "ALL" }) {
   if (!["HERO", "MAGIC", "ALL"].includes(type))
     throw new Error("Tipo non valido");
 
-  const filter = type === "ALL" ? {} : { type };
+  const filter =
+    type === "ALL" ? { isVisibile: true } : { type, isVisibile: true };
+
   const cards = await Card.find(filter).lean();
 
   if (!cards.length) throw new Error(`Nessuna carta ${type} trovata`);
@@ -351,4 +353,61 @@ export async function getRandomCards({ count, mode = "deck", type = "ALL" }) {
 export function addVisualEvent(game, event) {
   game.visualEvents ||= [];
   game.visualEvents.push(event);
+}
+
+export function serializeGame(game) {
+  return JSON.parse(
+    JSON.stringify({
+      id: game.id,
+      userIds: [...game.userIds],
+      usernames: { ...game.usernames },
+      teams: game.teams,
+      decks: game.decks,
+      hands: game.hands,
+      boards: game.boards,
+      health: { ...game.health },
+      barrier: { ...game.barrier },
+      crystals: { ...game.crystals },
+      maxCrystals: { ...game.maxCrystals },
+      frames: { ...game.frames },
+      currentTurnIndex: game.currentTurnIndex,
+      currentTurn: game.currentTurn,
+      currentPlayerId: game.currentPlayerId,
+      passiveEffects: game.passiveEffects || null,
+      status: game.status,
+      visualEvents: game._visualEvents || {},
+    })
+  );
+}
+export async function finalizeGameUpdate({ game, ioInstance, log }) {
+  if (!game) return;
+
+  // 1. Aggiungi al log
+  if (log) {
+    const result = addGameHistoryEntry(game, log);
+    if (result.success) {
+      ioInstance.to(game.id).emit("history-update", result.entry);
+    } else {
+      console.warn("⚠️ Logging fallito:", result.error);
+    }
+  }
+
+  // 2. Aggiorna tutti i client con lo stato aggiornato
+  // emitSanitizedGameUpdate(ioInstance, game);
+
+  // 3. (opzionale) Salva su DB lo stato della partita qui
+  // await saveGameToDatabase(game); // <-- se implementi il salvataggio
+}
+export function addGameHistoryEntry(game, { type, actor, details }) {
+  if (!game.history) game.history = [];
+
+  const entry = {
+    type,
+    actor,
+    timestamp: Date.now(),
+    details,
+  };
+
+  game.history.push(entry);
+  return { success: true, entry };
 }

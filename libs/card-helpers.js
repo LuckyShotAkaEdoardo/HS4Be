@@ -56,12 +56,12 @@ export function canAttack(attacker, target, game, userId) {
   if (target?.type === "FACE") {
     const opponentId = game.allPlayers.find((u) => u !== userId);
     const enemyBoard = game.boards[opponentId] || [];
-    const wallExists = enemyBoard.some((c) => hasAbility(c, "WALL"));
+    const wallExists = enemyBoard.some((c) => hasAbility(c, "TAUNT"));
     if (wallExists) {
-      console.log("[BLOCK] WALL nemico presente");
+      console.log("[BLOCK] TAUNT nemico presente");
       return {
         allowed: false,
-        reason: "Il FACE è protetto da un WALL nemico",
+        reason: "Il FACE è protetto da un TAUNT nemico",
       };
     }
   }
