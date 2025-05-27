@@ -266,65 +266,63 @@ export function handleEndTurn({ gameId, userId, games }) {
 
   emitPassiveTrigger(EffectTriggers.ON_TURN_END, g, { target: userId });
 
-  // ✅ Calcolo nuovo indice di turno
+  // 🔄 Cambia il turno
   g.currentTurnIndex = (g.currentTurnIndex + 1) % g.userIds.length;
-  const current = g.userIds[g.currentTurnIndex];
-  g.currentPlayerId = current;
+  const nextPlayerId = g.userIds[g.currentTurnIndex];
+  g.currentPlayerId = nextPlayerId;
 
-  // ✅ Incrementa il turno globale SOLO quando si chiude un ciclo
+  // 🔢 Incrementa turno globale solo a fine ciclo
   if (g.currentTurnIndex === 0) {
     g.currentTurn = (g.currentTurn ?? 0) + 1;
   }
 
-  g.maxCrystals[current] = Math.min((g.maxCrystals[current] || 0) + 1, 10);
-  g.crystals[current] = g.maxCrystals[current];
+  // 💠 Aggiorna cristalli
+  const maxCrystals = Math.min((g.maxCrystals[nextPlayerId] || 0) + 1, 10);
+  g.maxCrystals[nextPlayerId] = maxCrystals;
+  g.crystals[nextPlayerId] = maxCrystals;
 
-  emitPassiveTrigger(EffectTriggers.ON_DRAW_PHASE, g, { target: current });
+  // 🎯 Trigger pre-pesca
+  emitPassiveTrigger(EffectTriggers.ON_DRAW_PHASE, g, { target: nextPlayerId });
 
-  const card = g.decks[current].shift();
-  if (card) {
-    g.hands[current].push(card); // usa la carta già con id unico
+  // 📥 Pesca carta
+  const drawnCard = g.decks[nextPlayerId]?.shift() || null;
+  if (drawnCard) {
+    g.hands[nextPlayerId] = g.hands[nextPlayerId] || [];
+    g.hands[nextPlayerId].push(drawnCard);
     addVisualEvent(g, {
       type: "DRAW",
-      cardId: card.id,
-      owner: current,
+      cardId: drawnCard.id,
+      owner: nextPlayerId,
     });
   }
 
-  for (const c of g.boards[current] || []) {
-    const needsRest =
-      c.restingUntilTurn != null && c.restingUntilTurn > g.currentTurn;
-    // c.canAttack =
-    //   !needsRest || hasAbility(c, "CHARGE") || hasAbility(c, "RUSH");
-  }
-  // Aumenta il turno globale solo quando si completa un ciclo
-  // if (g.currentTurnIndex === 0) {
-  //   g.currentTurn = (g.currentTurn ?? 0) + 1;
-  // }
-
-  emitPassiveTrigger(EffectTriggers.ON_TURN_START, g, { target: current });
-
-  // for (const c of g.boards[current] || []) {
-  //   c.justPlayed = false;
-  // }
-  for (const c of g.boards[current] || []) {
+  // 🔁 Reset stato creature
+  for (const c of g.boards[nextPlayerId] || []) {
     c.hasAttackedThisTurn = false;
 
+    // 🔻 Riduci durata effetti negativi
     if (c.frozenFor && c.frozenFor > 0) c.frozenFor--;
     if (c.stunnedFor && c.stunnedFor > 0) c.stunnedFor--;
   }
+
+  // 🚀 Trigger di inizio turno
+  emitPassiveTrigger(EffectTriggers.ON_TURN_START, g, {
+    target: nextPlayerId,
+  });
+
+  // ✅ Risultato finale
   return {
     game: g,
     log: {
       type: "END_TURN",
       actor: userId,
       details: {
-        nextPlayer: g.currentPlayerId, // ✅ usa il valore già aggiornato
+        nextPlayer: nextPlayerId,
         turn: g.currentTurn,
       },
     },
     effects: {
-      drawnCard: card ?? null,
+      drawnCard,
     },
   };
 }

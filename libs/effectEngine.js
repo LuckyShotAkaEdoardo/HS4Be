@@ -1,3 +1,5 @@
+import { getRandomCards, matchesFilter } from "./gameUtils.js";
+
 const passiveEffectRegistry = new Map(); // gameId => { trigger => [ { card, effect, owner } ] }
 
 export const EffectTriggers = {
@@ -105,13 +107,37 @@ const effectHandlers = {
     if (maxSummonable <= 0) return;
 
     const count = Math.min(value ?? 1, maxSummonable);
-    const type = card.effect.subtype || "HERO";
+    const effect = card.effect || {};
+    let summoned = [];
 
-    const summoned = await getRandomCards({
-      count,
-      mode: "summon",
-      type,
-    });
+    // 🔷 cardIds diretti
+    if (Array.isArray(effect.cardIds) && effect.cardIds.length > 0) {
+      const fullCards = await getCardsByIds(effect.cardIds);
+      summoned = fullCards.slice(0, count);
+    }
+
+    // 🔷 pool + filtro
+    else if (Array.isArray(effect.pool) && effect.pool.length > 0) {
+      let pool = await getCardsByIds(effect.pool);
+      if (effect.filter) {
+        pool = pool.filter((c) => matchesFilter(c, effect.filter));
+      }
+      summoned = pickRandom(pool, count);
+    }
+
+    // 🔷 fallback: tipo + filtro (casuale da DB)
+    else {
+      let all = await getRandomCards({
+        count: 100,
+        type: effect.subtype || "HERO",
+      }); // prendi un campione ampio
+      if (effect.filter) {
+        all = all.filter((c) =>
+          Object.entries(effect.filter).every(([key, val]) => c[key] === val)
+        );
+      }
+      summoned = pickRandom(all, count);
+    }
 
     game.boards[player].push(...summoned);
   },

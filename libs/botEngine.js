@@ -6,6 +6,7 @@ import {
 } from "./gameHandeler2.js";
 import { emitSanitizedGameUpdate, finalizeGameUpdate } from "./gameUtils.js";
 import { canAttack } from "./card-helpers.js";
+import crypto from "crypto"; // se usi ES Modules (tipo `.mjs` o `"type": "module"`)
 
 export async function generateBotDeck() {
   try {
@@ -14,6 +15,19 @@ export async function generateBotDeck() {
       mode: "deck",
       type: "HERO",
     });
+
+    while (deck.length < 30) {
+      const baseCard = deck[deck.length % (deck.length || 1)];
+      if (!baseCard) break; // prevenzione hard
+
+      const clone = {
+        ...baseCard,
+        _id: baseCard._id || baseCard.id || `fallback-${Math.random()}`,
+        id: crypto.randomUUID(),
+      };
+      deck.push(clone);
+    }
+    console.log(deck);
     return deck;
   } catch (err) {
     console.error("Errore nella generazione mazzo bot:", err.message);

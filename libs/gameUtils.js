@@ -293,21 +293,26 @@ export function checkDeadCards(gameId, game) {
   }
 }
 
-export async function getRandomCards({ count, mode = "deck", type = "ALL" }) {
+export async function getRandomCards({
+  count,
+  mode = "deck",
+  type = "ALL",
+  filter = {},
+}) {
   if (isNaN(count) || count <= 0) throw new Error("Numero non valido");
   if (!["deck", "summon"].includes(mode))
     throw new Error("Modalità non valida");
   if (!["HERO", "MAGIC", "ALL"].includes(type))
     throw new Error("Tipo non valido");
 
-  const filter =
+  const baseFilter =
     type === "ALL" ? { isVisibile: true } : { type, isVisibile: true };
 
-  const cards = await Card.find(filter).lean();
-
+  const cards = await Card.find(baseFilter).lean();
   if (!cards.length) throw new Error(`Nessuna carta ${type} trovata`);
 
-  const validCards = cards.filter((card, i) => {
+  // 🧠 Validazione struttura minima
+  let validCards = cards.filter((card, i) => {
     const isValid =
       card &&
       typeof card === "object" &&
@@ -323,8 +328,14 @@ export async function getRandomCards({ count, mode = "deck", type = "ALL" }) {
     return isValid;
   });
 
+  // 🎯 Applica filtro secondario (statistiche)
+  if (Object.keys(filter).length > 0) {
+    validCards = validCards.filter((c) => matchesFilter(c, filter));
+  }
+
   const shuffled = [...validCards].sort(() => 0.5 - Math.random());
   const result = [];
+
   const maxCopies = mode === "deck" ? 2 : 1;
   const used = {};
 
@@ -337,13 +348,12 @@ export async function getRandomCards({ count, mode = "deck", type = "ALL" }) {
       result.push(card);
       used[key]++;
     }
-
     if (result.length >= count) break;
   }
 
   if (result.length < count) {
-    throw new Error(
-      `Solo ${result.length} carte valide trovate su ${count} richieste`
+    console.warn(
+      `⚠️ Solo ${result.length} carte valide trovate su ${count} richieste`
     );
   }
 
@@ -410,4 +420,21 @@ export function addGameHistoryEntry(game, { type, actor, details }) {
 
   game.history.push(entry);
   return { success: true, entry };
+}
+export function matchesFilter(card, filter) {
+  return Object.entries(filter).every(([key, condition]) => {
+    const cardValue = card[key];
+
+    if (typeof condition === "object" && condition !== null) {
+      if ("$eq" in condition) return cardValue === condition.$eq;
+      if ("$gt" in condition) return cardValue > condition.$gt;
+      if ("$gte" in condition) return cardValue >= condition.$gte;
+      if ("$lt" in condition) return cardValue < condition.$lt;
+      if ("$lte" in condition) return cardValue <= condition.$lte;
+      if ("$in" in condition) return condition.$in.includes(cardValue);
+      return false;
+    } else {
+      return cardValue === condition;
+    }
+  });
 }

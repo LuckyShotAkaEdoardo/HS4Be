@@ -218,8 +218,8 @@ export const initializeSocket = (server) => {
           });
 
           setTimeout(() => {
-            // emitSanitizedGameUpdate(ioInstance, game);
-            socket.emit("turn-update", {
+            emitSanitizedGameUpdate(ioInstance, game);
+            ioInstance.to(game.id).emit("turn-update", {
               currentPlayerId: game.currentPlayerId,
               crystals: game.crystals[game.currentPlayerId],
             });
@@ -313,31 +313,25 @@ export const initializeSocket = (server) => {
 
       if (result?.error) return socket.emit("error", result.error);
 
-      // ✅ aggiorna lo stato e registra log
+      const updatedGame = result.game;
       finalizeGameUpdate({
-        game: result.game,
+        game: updatedGame,
         ioInstance,
         log: result.log,
       });
-
-      // 🔁 Calcoli derivati dopo aver aggiornato il game
-      const game = result.game;
-      const nextPlayer = game.currentPlayerId;
-      const socketId = game.userSockets?.[nextPlayer];
+      emitSanitizedGameUpdate(ioInstance, updatedGame);
+      const nextPlayer = updatedGame.currentPlayerId;
+      const socketId = updatedGame.userSockets?.[nextPlayer];
       const drawnCard = result.effects?.drawnCard ?? null;
-      const deckLength = game.decks[nextPlayer]?.length ?? 0;
-      const frame = game.frames?.[nextPlayer] ?? "";
+      const deckLength = updatedGame.decks[nextPlayer]?.length ?? 0;
+      const frame = updatedGame.frames?.[nextPlayer] || "";
 
-      // 🔔 Aggiorna chi deve giocare
-      ioInstance.to(game.id).emit("turn-update", {
+      ioInstance.to(updatedGame.id).emit("turn-update", {
         currentPlayerId: nextPlayer,
-        crystals: game.crystals[nextPlayer],
+        crystals: updatedGame.crystals[nextPlayer],
       });
 
-      // 🃏 Invia la carta pescata solo al giocatore che ha pescato
       if (socketId && drawnCard) {
-        const frame = game.frames?.[nextPlayer] || "";
-
         ioInstance.to(socketId).emit("card-drawn", {
           card: drawnCard,
           frame: frame,
@@ -345,7 +339,6 @@ export const initializeSocket = (server) => {
         });
       }
 
-      // 🤖 Attiva bot se necessario
       if (typeof nextPlayer === "string" && nextPlayer.startsWith("bot:")) {
         setTimeout(() => {
           simulateBotMove(gameId, nextPlayer, games, ioInstance);
