@@ -142,12 +142,11 @@ const effectHandlers = {
     game.boards[player].push(...summoned);
   },
   SHIELD: ({ game, target, value = 1 }) => {
-    const apply = (t) => {
+    const targets = Array.isArray(target) ? target : [target];
+    for (const t of targets) {
       game.barrier[t] = (game.barrier[t] || 0) + value;
-    };
-    (Array.isArray(target) ? target : [target]).forEach(apply);
+    }
   },
-
   CRYSTALS: ({ game, source, value = 1, card }) => {
     const mode = card.effect.mode || "available";
     if (mode === "max") {
@@ -164,23 +163,34 @@ const effectHandlers = {
   },
 
   BUFF_ATTACK: ({ game, target, value }) => {
+    const targets = Array.isArray(target) ? target : [target];
     for (const uid of game.userIds) {
-      const card = (game.boards[uid] || []).find((c) => c.id === target);
-      if (card) card.attack += value;
+      for (const card of game.boards[uid] || []) {
+        if (targets.includes(card.id)) {
+          card.attack += value;
+        }
+      }
     }
   },
 
   BUFF_DEFENSE: ({ game, target, value }) => {
+    const targets = Array.isArray(target) ? target : [target];
     for (const uid of game.userIds) {
-      const card = (game.boards[uid] || []).find((c) => c.id === target);
-      if (card) card.defense += value;
+      for (const card of game.boards[uid] || []) {
+        if (targets.includes(card.id)) {
+          card.defense += value;
+        }
+      }
     }
   },
-
   SILENCE: ({ game, target }) => {
+    const targets = Array.isArray(target) ? target : [target];
     for (const uid of game.userIds) {
-      const card = (game.boards[uid] || []).find((c) => c.id === target);
-      if (card) card.abilities = [];
+      for (const card of game.boards[uid] || []) {
+        if (targets.includes(card.id)) {
+          card.abilities = [];
+        }
+      }
     }
   },
 
@@ -227,21 +237,27 @@ const effectHandlers = {
     const opponentId = game.userIds.find((u) => u !== source);
     game.hands[opponentId]?.splice(0, value);
   },
-
   FREEZE: ({ game, target, value = 1 }) => {
+    const targets = Array.isArray(target) ? target : [target];
     for (const uid of game.userIds) {
-      const card = game.boards[uid]?.find((c) => c.id === target);
-      if (card) card.frozenFor = value;
+      for (const card of game.boards[uid] || []) {
+        if (targets.includes(card.id)) {
+          card.frozenFor = value;
+        }
+      }
     }
   },
 
   STUN: ({ game, target, value = 1 }) => {
+    const targets = Array.isArray(target) ? target : [target];
     for (const uid of game.userIds) {
-      const card = game.boards[uid]?.find((c) => c.id === target);
-      if (card) card.stunnedFor = value;
+      for (const card of game.boards[uid] || []) {
+        if (targets.includes(card.id)) {
+          card.stunnedFor = value;
+        }
+      }
     }
   },
-
   POLYMORPH: ({ game, target, card }) => {
     const intoId = card.effect.intoCardId;
     for (const uid of game.userIds) {
@@ -285,21 +301,27 @@ const effectHandlers = {
       }
     }
   },
-
   BURN: ({ game, target, value = 1, duration = 2 }) => {
+    const targets = Array.isArray(target) ? target : [target];
     for (const uid of game.userIds) {
-      const card = game.boards[uid]?.find((c) => c.id === target);
-      if (card) card.burning = { value, duration };
+      for (const card of game.boards[uid] || []) {
+        if (targets.includes(card.id)) {
+          card.burning = { value, duration };
+        }
+      }
     }
   },
 
   SET_STATS: ({ game, target, card }) => {
-    const { attack, defense } = card.effect.value || {};
+    const targets = Array.isArray(target) ? target : [target];
+    const { attack, defense } = card.effect?.value || {};
+
     for (const uid of game.userIds) {
-      const card = game.boards[uid]?.find((c) => c.id === target);
-      if (card) {
-        if (typeof attack === "number") card.attack = attack;
-        if (typeof defense === "number") card.defense = defense;
+      for (const c of game.boards[uid] || []) {
+        if (targets.includes(c.id)) {
+          if (typeof attack === "number") c.attack = attack;
+          if (typeof defense === "number") c.defense = defense;
+        }
       }
     }
   },

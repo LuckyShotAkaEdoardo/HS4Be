@@ -265,6 +265,36 @@ export function handleEndTurn({ gameId, userId, games }) {
   if (g.currentPlayerId !== userId) return { error: "Non è il tuo turno" };
 
   emitPassiveTrigger(EffectTriggers.ON_TURN_END, g, { target: userId });
+  // 🔥 Tick: applica danno da bruciatura a tutte le carte che ne hanno una attiva
+  for (const userId of g.userIds) {
+    for (const card of g.boards[userId] || []) {
+      if (card.burning && card.burning.duration > 0) {
+        const damage = card.burning.value || 1;
+        card.defense -= damage;
+
+        addVisualEvent(g, {
+          type: "BURN_TICK",
+          cardId: card.id,
+          amount: damage,
+          source: "system",
+        });
+
+        card.burning.duration -= 1;
+
+        if (card.burning.duration <= 0) {
+          delete card.burning;
+        }
+
+        if (card.defense <= 0) {
+          unregisterPassiveEffectsByCard(gameId, card.id);
+          emitPassiveTrigger(EffectTriggers.ON_DEATH, g, {
+            target: card.id,
+            source: "burn",
+          });
+        }
+      }
+    }
+  }
 
   // 🔄 Cambia il turno
   g.currentTurnIndex = (g.currentTurnIndex + 1) % g.userIds.length;
