@@ -452,8 +452,10 @@ export function resolveTargets({ target, source, game, count }) {
 
   const limit = parseInt(count) || Infinity;
 
-  // Target diretto (cardId o userId)
   if (typeof target === "string") {
+    const opponentId = game.userIds.find((id) => id !== source);
+    const allyId = source;
+
     switch (target) {
       case "ALL_PLAYERS":
         return game.userIds.slice(0, limit);
@@ -463,42 +465,51 @@ export function resolveTargets({ target, source, game, count }) {
           .flatMap((uid) => game.boards[uid]?.map((c) => c.id) || [])
           .slice(0, limit);
 
-      case "OPPONENT":
-        return game.userIds.filter((id) => id !== source).slice(0, limit);
-
       case "SELF":
         return [source];
 
+      case "OPPONENT":
+        return [opponentId];
+
+      case "ALL_ALLIES":
+        return game.boards[allyId]?.map((c) => c.id).slice(0, limit) || [];
+
+      case "ALL_ENEMIES":
+        return game.boards[opponentId]?.map((c) => c.id).slice(0, limit) || [];
+
+      case "ENEMY_CARD":
+        return game.boards[opponentId]?.map((c) => c.id).slice(0, limit) || [];
+
+      case "ALLY":
+        return game.boards[allyId]?.map((c) => c.id).slice(0, limit) || [];
+
       case "RANDOM_ENEMY": {
-        const enemyId = game.userIds.find((id) => id !== source);
-        const enemyBoard = game.boards[enemyId] || [];
-        const shuffled = [...enemyBoard].sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, limit).map((c) => c.id);
+        const enemyBoard = game.boards[opponentId] || [];
+        return shuffle(enemyBoard)
+          .slice(0, limit)
+          .map((c) => c.id);
       }
 
       case "WEAKEST_ENEMY": {
-        const enemyId = game.userIds.find((id) => id !== source);
-        const sorted = [...(game.boards[enemyId] || [])].sort(
+        const sorted = [...(game.boards[opponentId] || [])].sort(
           (a, b) => a.defense - b.defense
         );
         return sorted.slice(0, limit).map((c) => c.id);
       }
 
       case "STRONGEST_ENEMY": {
-        const enemyId = game.userIds.find((id) => id !== source);
-        const sorted = [...(game.boards[enemyId] || [])].sort(
+        const sorted = [...(game.boards[opponentId] || [])].sort(
           (a, b) => b.attack - a.attack
         );
         return sorted.slice(0, limit).map((c) => c.id);
       }
 
       default:
-        // Se è un id valido (utente o carta)
+        // fallback: ID diretto
         return [target];
     }
   }
 
-  // Array di ID espliciti
   if (Array.isArray(target)) {
     return target.slice(0, limit);
   }
