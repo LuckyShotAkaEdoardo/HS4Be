@@ -1,4 +1,5 @@
 import { getRandomCards, matchesFilter } from "./gameUtils.js";
+import { hasAbility } from "./card-helpers.js";
 
 const passiveEffectRegistry = new Map(); // gameId => { trigger => [ { card, effect, owner } ] }
 
