@@ -438,3 +438,32 @@ export function matchesFilter(card, filter) {
     }
   });
 }
+export function findCardInBoard(game, cardId) {
+  for (const playerId of game.userIds) {
+    const board = game.boards[playerId] || [];
+    const found = board.find((c) => c.id === cardId);
+    if (found) return found;
+  }
+  return null;
+}
+
+export function getValidTargetIds(targetType, userId, game) {
+  const opponentId = game.opponentId;
+  const myBoard = game.boards[userId] || [];
+  const oppBoard = game.boards[opponentId] || [];
+
+  switch (targetType) {
+    case "CHOOSE_ANY":
+      return [...myBoard, ...oppBoard].map((c) => c.id);
+    case "CHOOSE_ENEMY":
+      return oppBoard.map((c) => c.id);
+    case "CHOOSE_ALLY":
+      return myBoard.map((c) => c.id);
+    case "CHOOSE_ENEMY_OR_FACE":
+      return [...oppBoard.map((c) => c.id), `FACE:${opponentId}`];
+    case "CHOOSE_ALLY_OR_FACE":
+      return [...myBoard.map((c) => c.id), `FACE:${userId}`];
+    default:
+      return [];
+  }
+}

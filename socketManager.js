@@ -232,7 +232,7 @@ export const initializeSocket = (server) => {
       }
     });
 
-    socket.on("play-card", ({ gameId, cardId, index }) => {
+    socket.on("play-card", ({ gameId, cardId, index, targets = [] }) => {
       if (throttleAction(socket)) return;
 
       const userId = socket.userId;
@@ -253,6 +253,7 @@ export const initializeSocket = (server) => {
             userId,
             games,
             ioInstance, // 🔐 lasciato per usi interni nel motore
+            targets,
           });
 
           if (result?.game) {

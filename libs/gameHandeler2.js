@@ -1,4 +1,9 @@
-import { canAttack, handleDivineShield, hasAbility } from "./card-helpers.js";
+import {
+  canAttack,
+  handleDivineShield,
+  hasAbility,
+  findCardInBoard,
+} from "./card-helpers.js";
 import {
   EffectTriggers,
   emitPassiveTrigger,
@@ -10,9 +15,12 @@ import {
   checkVictoryConditions,
   endGame,
   addVisualEvent,
+  checkDeadCards,
+  getValidTargetIds,
 } from "./gameUtils.js";
-import { checkDeadCards } from "./gameUtils.js";
+import { getValidTargetIds } from "./gameUtils.js";
 
+// import { applyEffectToTargets } from "./card-effect.js";
 export async function handlePlayCard({
   gameId,
   card,
@@ -20,6 +28,7 @@ export async function handlePlayCard({
   userId,
   games,
   ioInstance,
+  targets,
 }) {
   const g = games[gameId];
   // console.log("[DEBUG] handlePlayCard - gameId:", gameId);
@@ -32,6 +41,17 @@ export async function handlePlayCard({
 
   if (realCard.cost > (g.crystals[userId] || 0)) {
     return { error: "Non hai abbastanza cristalli" };
+  }
+  if (targets?.length > 0 && card.effect?.target) {
+    const validTargets = getValidTargetIds(card.effect.target, userId, game);
+
+    const invalidTargets = targets.filter((t) => !validTargets.includes(t));
+    if (invalidTargets.length > 0) {
+      return { error: `Target non valido: ${invalidTargets.join(", ")}` };
+    }
+
+    // 🔥 Assegna tutti i target validati alla carta (array)
+    card.targetIds = [...targets];
   }
 
   g.hands[userId] = g.hands[userId].filter((c) => c.id !== realCard.id);
