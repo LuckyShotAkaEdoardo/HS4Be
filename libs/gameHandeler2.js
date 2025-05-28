@@ -1,9 +1,4 @@
-import {
-  canAttack,
-  handleDivineShield,
-  hasAbility,
-  findCardInBoard,
-} from "./card-helpers.js";
+import { canAttack, handleDivineShield, hasAbility } from "./card-helpers.js";
 import {
   EffectTriggers,
   emitPassiveTrigger,
@@ -18,7 +13,6 @@ import {
   checkDeadCards,
   getValidTargetIds,
 } from "./gameUtils.js";
-import { getValidTargetIds } from "./gameUtils.js";
 
 // import { applyEffectToTargets } from "./card-effect.js";
 export async function handlePlayCard({
