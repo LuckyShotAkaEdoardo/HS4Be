@@ -15,6 +15,130 @@ import {
 } from "./gameUtils.js";
 
 // import { applyEffectToTargets } from "./card-effect.js";
+// export async function handlePlayCard({
+//   gameId,
+//   card,
+//   index,
+//   userId,
+//   games,
+//   ioInstance,
+//   targets,
+// }) {
+//   const g = games[gameId];
+//   // console.log("[DEBUG] handlePlayCard - gameId:", gameId);
+//   if (!g || g.status === "ended") return { error: "Partita non valida" };
+//   if (userId !== g.currentPlayerId) return { error: "Non è il tuo turno" };
+//   // console.log("[DEBUG] userId:", userId);
+//   const realCard = g.hands[userId].find((c) => c.id === card.id);
+//   // console.log("[DEBUG] hands:", g?.hands?.[userId]);
+//   if (!realCard) return { error: "La carta non è nella tua mano" };
+
+//   if (realCard.cost > (g.crystals[userId] || 0)) {
+//     return { error: "Non hai abbastanza cristalli" };
+//   }
+//   if (targets?.length > 0 && card.effect?.target) {
+//     const validTargets = getValidTargets(card.effect.target, userId, game);
+
+//     const invalidTargets = targets.filter((t) => !validTargets.includes(t));
+//     if (invalidTargets.length > 0) {
+//       return { error: `Target non valido: ${invalidTargets.join(", ")}` };
+//     }
+
+//     // 🔥 Assegna tutti i target validati alla carta (array)
+//     card.effect.target = [...targets];
+//   }
+
+//   g.hands[userId] = g.hands[userId].filter((c) => c.id !== realCard.id);
+//   g.crystals[userId] -= realCard.cost;
+
+//   if (realCard.type === "HERO") {
+//     g.boards[userId] = g.boards[userId] || [];
+//     if (g.boards[userId].length >= 6) {
+//       g.hands[userId].push(realCard);
+//       g.crystals[userId] += realCard.cost;
+//       return { error: "Hai già 6 carte sul campo" };
+//     }
+
+//     const insertIndex = Math.max(
+//       0,
+//       Math.min(index ?? g.boards[userId].length, g.boards[userId].length)
+//     );
+
+//     // for (const c of g.boards[userId] || []) {
+//     //   if (c.frozenFor && c.frozenFor > 0) c.frozenFor--;
+//     //   if (c.stunnedFor && c.stunnedFor > 0) c.stunnedFor--;
+//     // }
+//     g.boards[userId].splice(insertIndex, 0, {
+//       ...realCard,
+//       restingUntilTurn: g.currentTurn + 1,
+//       //   canAttack:
+//       //     hasAbility(card, "CHARGE") || hasAbility(card, "RUSH") || false,
+//     });
+//     addVisualEvent(g, {
+//       type: "SUMMON",
+//       cardId: realCard.id,
+//       owner: userId,
+//     });
+
+//     emitPassiveTrigger(EffectTriggers.ON_ENTER_BOARD, g, {
+//       target: realCard.id,
+//       source: userId,
+//     });
+
+//     await triggerEffects({
+//       trigger: EffectTriggers.ON_PLAY,
+//       game: g,
+//       card: realCard,
+//       source: userId,
+//       target: realCard.effect.target ?? null,
+//     });
+//   } else if (realCard.type === "MAGIC") {
+//     await triggerEffects({
+//       trigger: EffectTriggers.ON_PLAY,
+//       game: g,
+//       card: realCard,
+//       source: userId,
+//       target: realCard.effect.target ?? null,
+//     });
+
+//     await emitPassiveTrigger(EffectTriggers.ON_ENTER_BOARD, g, {
+//       source: userId,
+//       target: userId,
+//       value: card,
+//       target: realCard.effect.target ?? null,
+//     });
+//   }
+
+//   if (realCard.effect && realCard.effect.trigger !== EffectTriggers.ON_PLAY) {
+//     registerPassiveEffects(gameId, [
+//       { effect: realCard.effect, card: realCard, owner: userId },
+//     ]);
+//   }
+
+//   emitPassiveTrigger(EffectTriggers.ON_CARD_PLAYED, g, {
+//     target: realCard.id,
+//     source: userId,
+//   });
+
+//   checkDeadCards(gameId, g);
+//   checkVictoryConditions(gameId, games, (gid, w, l) =>
+//     endGame(gid, games, ioInstance, w, l)
+//   );
+
+//   return {
+//     game: g,
+//     log: {
+//       type: "PLAY_CARD",
+//       actor: userId,
+//       details: {
+//         cardId: realCard.id,
+//         cardName: realCard.name,
+//         index,
+//       },
+//     },
+//   };
+// }
+
 export async function handlePlayCard({
   gameId,
   card,
@@ -25,32 +149,34 @@ export async function handlePlayCard({
   targets,
 }) {
   const g = games[gameId];
-  // console.log("[DEBUG] handlePlayCard - gameId:", gameId);
   if (!g || g.status === "ended") return { error: "Partita non valida" };
   if (userId !== g.currentPlayerId) return { error: "Non è il tuo turno" };
-  // console.log("[DEBUG] userId:", userId);
-  const realCard = g.hands[userId].find((c) => c.id === card.id);
-  // console.log("[DEBUG] hands:", g?.hands?.[userId]);
-  if (!realCard) return { error: "La carta non è nella tua mano" };
 
+  const realCard = g.hands[userId].find((c) => c.id === card.id);
+  if (!realCard) return { error: "La carta non è nella tua mano" };
   if (realCard.cost > (g.crystals[userId] || 0)) {
     return { error: "Non hai abbastanza cristalli" };
   }
-  if (targets?.length > 0 && card.effect?.target) {
-    const validTargets = getValidTargetIds(card.effect.target, userId, game);
 
+  // 🏹 Validazione e assegnazione target
+  if (targets?.length > 0 && realCard.effect?.target.includes("CHOOSE")) {
+    // console.log("guarda qui", realCard.effect.target, userId, g);
+    const validTargets = getValidTargetIds(realCard.effect.target, userId, g);
+    // console.log("guarda i valids target", validTargets);
     const invalidTargets = targets.filter((t) => !validTargets.includes(t));
     if (invalidTargets.length > 0) {
       return { error: `Target non valido: ${invalidTargets.join(", ")}` };
     }
-
-    // 🔥 Assegna tutti i target validati alla carta (array)
-    card.targetIds = [...targets];
+    realCard.effect.target = [...targets]; // Salvo sul vero oggetto in uso
+    console.log("guarda quello che arriva da fe", targets);
+    console.log("guarda quello che trova be", realCard.effect.target);
   }
 
+  // ✂️ Rimuovo carta dalla mano e cristalli
   g.hands[userId] = g.hands[userId].filter((c) => c.id !== realCard.id);
   g.crystals[userId] -= realCard.cost;
 
+  // 🧱 Solo se HERO → inserisci in board
   if (realCard.type === "HERO") {
     g.boards[userId] = g.boards[userId] || [];
     if (g.boards[userId].length >= 6) {
@@ -64,56 +190,45 @@ export async function handlePlayCard({
       Math.min(index ?? g.boards[userId].length, g.boards[userId].length)
     );
 
-    // for (const c of g.boards[userId] || []) {
-    //   if (c.frozenFor && c.frozenFor > 0) c.frozenFor--;
-    //   if (c.stunnedFor && c.stunnedFor > 0) c.stunnedFor--;
-    // }
-    g.boards[userId].splice(insertIndex, 0, {
-      ...realCard,
-      restingUntilTurn: g.currentTurn + 1,
-      //   canAttack:
-      //     hasAbility(card, "CHARGE") || hasAbility(card, "RUSH") || false,
-    });
+    realCard.restingUntilTurn = g.currentTurn + 1;
+    g.boards[userId].splice(insertIndex, 0, realCard);
+
     addVisualEvent(g, {
       type: "SUMMON",
       cardId: realCard.id,
       owner: userId,
     });
 
-    emitPassiveTrigger(EffectTriggers.ON_ENTER_BOARD, g, {
-      target: realCard.id,
-      source: userId,
-    });
-
-    await triggerEffects({
-      trigger: EffectTriggers.ON_PLAY,
+    const effectsResult = await triggerEffects({
+      trigger: EffectTriggers.ON_ENTER_BOARD,
       game: g,
       card: realCard,
       source: userId,
-      target: realCard.targetId ?? null,
-    });
-  } else if (realCard.type === "MAGIC") {
-    await triggerEffects({
-      trigger: EffectTriggers.ON_PLAY,
-      game: g,
-      card: realCard,
-      source: userId,
-      target: realCard.targetId ?? null,
+      target: realCard.effect?.target ?? realCard.id, // fallback
     });
 
-    await emitPassiveTrigger(EffectTriggers.ON_ENTER_BOARD, g, {
-      source: userId,
-      target: userId,
-      value: card,
-    });
+    console.log("risultato effetto", effectsResult); // 🔥 Trigger effetto attivo
   }
 
+  if (realCard.effect?.trigger === EffectTriggers.ON_PLAY) {
+    const effectsResult = await triggerEffects({
+      trigger: EffectTriggers.ON_PLAY,
+      game: g,
+      card: realCard,
+      source: userId,
+      target: realCard.effect.target ?? null,
+    });
+    console.log("risultato effetto", effectsResult); // 🔥 Trigger effetto attivo
+  }
+
+  // 🌀 Registra effetti passivi non ON_PLAY
   if (realCard.effect && realCard.effect.trigger !== EffectTriggers.ON_PLAY) {
     registerPassiveEffects(gameId, [
       { effect: realCard.effect, card: realCard, owner: userId },
     ]);
   }
 
+  // 🎯 Trigger globali
   emitPassiveTrigger(EffectTriggers.ON_CARD_PLAYED, g, {
     target: realCard.id,
     source: userId,
@@ -137,6 +252,7 @@ export async function handlePlayCard({
     },
   };
 }
+
 export function handleAttack({
   gameId,
   attacker,
@@ -265,7 +381,7 @@ export function handleAttack({
       actor: userId,
       details: {
         attackerId: attacker.id,
-        targetId: target.id,
+        target: target.id,
       },
     },
   };
@@ -278,7 +394,7 @@ export function handleEndTurn({ gameId, userId, games }) {
   if (!g.userIds.includes(userId)) return { error: "Giocatore non valido" };
   if (g.currentPlayerId !== userId) return { error: "Non è il tuo turno" };
 
-  emitPassiveTrigger(EffectTriggers.ON_TURN_END, g, { target: userId });
+  emitPassiveTrigger(EffectTriggers.ON_TURN_END, g, { actor: userId });
   // 🔥 Tick: applica danno da bruciatura a tutte le carte che ne hanno una attiva
   for (const userId of g.userIds) {
     for (const card of g.boards[userId] || []) {
@@ -326,7 +442,7 @@ export function handleEndTurn({ gameId, userId, games }) {
   g.crystals[nextPlayerId] = maxCrystals;
 
   // 🎯 Trigger pre-pesca
-  emitPassiveTrigger(EffectTriggers.ON_DRAW_PHASE, g, { target: nextPlayerId });
+  emitPassiveTrigger(EffectTriggers.ON_DRAW_PHASE, g, { actor: nextPlayerId });
 
   // 📥 Pesca carta
   const drawnCard = g.decks[nextPlayerId]?.shift() || null;
@@ -351,7 +467,7 @@ export function handleEndTurn({ gameId, userId, games }) {
 
   // 🚀 Trigger di inizio turno
   emitPassiveTrigger(EffectTriggers.ON_TURN_START, g, {
-    target: nextPlayerId,
+    actor: nextPlayerId,
   });
 
   // ✅ Risultato finale

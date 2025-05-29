@@ -52,7 +52,7 @@ export function emitSanitizedGameUpdate(io, game) {
     if (game._visualEvents?.[userId]) {
       view.visualEvents = game._visualEvents[userId];
     }
-    console.log("[DEBUG] view:", view);
+    // console.log("[DEBUG] view:", view);
     socket.emit("game-update", view);
   }
 
@@ -448,10 +448,15 @@ export function findCardInBoard(game, cardId) {
 }
 
 export function getValidTargetIds(targetType, userId, game) {
-  const opponentId = game.opponentId;
+  const opponentId = game.userIds.find((id) => id !== userId);
+
   const myBoard = game.boards[userId] || [];
   const oppBoard = game.boards[opponentId] || [];
-
+  // console.log("OpponentId calcolato:", opponentId);
+  // console.log(
+  //   "OppBoard IDs:",
+  //   oppBoard.map((c) => c.id)
+  // );
   switch (targetType) {
     case "CHOOSE_ANY":
       return [...myBoard, ...oppBoard].map((c) => c.id);
@@ -467,3 +472,24 @@ export function getValidTargetIds(targetType, userId, game) {
       return [];
   }
 }
+
+// export async function applyEffectResults(game, effects) {
+//   for (const effect of effects) {
+//     const handler = effectHandlers[effect.type];
+//     if (typeof handler === "function") {
+//       // Supporta effetti con singolo target o più target
+//       await handler({
+//         game,
+//         card: effect.card ?? null, // facoltativo
+//         source: effect.source ?? null,
+//         target: effect.to, // la carta o playerId target
+//         value: effect.amount ?? effect.value ?? 1,
+//         duration: effect.duration,
+//         passive: effect.passive,
+//         owner: effect.owner,
+//       });
+//     } else {
+//       console.warn(`[SKIP] Nessun handler per effetto ${effect.type}`);
+//     }
+//   }
+// }

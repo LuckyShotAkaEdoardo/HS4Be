@@ -7,6 +7,7 @@ import {
 import { emitSanitizedGameUpdate, finalizeGameUpdate } from "./gameUtils.js";
 import { canAttack } from "./card-helpers.js";
 import crypto from "crypto"; // se usi ES Modules (tipo `.mjs` o `"type": "module"`)
+import { resolveTargets } from "./effectEngine.js";
 
 export async function generateBotDeck() {
   try {
@@ -27,7 +28,7 @@ export async function generateBotDeck() {
       };
       deck.push(clone);
     }
-    console.log(deck);
+    //console.log(deck);
     return deck;
   } catch (err) {
     console.error("Errore nella generazione mazzo bot:", err.message);

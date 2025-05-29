@@ -472,24 +472,22 @@ function throttleAction(socket, ms = 500) {
   return false; // consenti
 }
 export function logStatus() {
-  console.log("======= SERVER STATUS =======");
-  console.log(`🎮 Partite attive: ${Object.keys(games).length}`);
-  for (const [id, game] of Object.entries(games)) {
-    const players = game.allPlayers || [];
-    const connected = players.filter((p) => {
-      const sid = userIdToSocketId[p];
-      return sid && ioInstance.sockets.sockets.has(sid);
-    });
-    console.log(
-      `- Partita ${id}: ${players.length} totali, ${connected.length} connessi`
-    );
-  }
-
-  for (const [mode, queue] of Object.entries(matchmakingQueues)) {
-    console.log(`🎯 In matchmaking ${mode}: ${queue.length} giocatore/i`);
-  }
-
-  console.log("================================");
+  // console.log("======= SERVER STATUS =======");
+  // console.log(`🎮 Partite attive: ${Object.keys(games).length}`);
+  // for (const [id, game] of Object.entries(games)) {
+  //   const players = game.allPlayers || [];
+  //   const connected = players.filter((p) => {
+  //     const sid = userIdToSocketId[p];
+  //     return sid && ioInstance.sockets.sockets.has(sid);
+  //   });
+  //   console.log(
+  //     `- Partita ${id}: ${players.length} totali, ${connected.length} connessi`
+  //   );
+  // }
+  // for (const [mode, queue] of Object.entries(matchmakingQueues)) {
+  //   console.log(`🎯 In matchmaking ${mode}: ${queue.length} giocatore/i`);
+  // }
+  // console.log("================================");
 }
 
 export function logStatusAsText() {
