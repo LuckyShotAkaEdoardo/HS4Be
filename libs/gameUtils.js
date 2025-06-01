@@ -112,15 +112,17 @@ export function endGame(gameId, games, ioInstance, winnerId, loserId) {
     .to(game.id)
     .emit("game-over", { winner: winnerId, loser: loserId });
 }
-
 export function assignUniqueIds(deck) {
   return deck.map((card) => {
     if (!card || typeof card !== "object" || !card._id) {
       throw new Error(`❌ Carta non valida: ${JSON.stringify(card)}`);
     }
 
+    // Deep clone completo della carta
+    const deepCloned = JSON.parse(JSON.stringify(card));
+
     return {
-      ...card,
+      ...deepCloned,
       id: crypto.randomUUID(),
     };
   });
@@ -278,7 +280,7 @@ export function checkDeadCards(gameId, game) {
 
     for (const card of [...board]) {
       if (card.defense <= 0) {
-        unregisterPassiveEffectsByCard(gameId, card._id.toString(), true);
+        // unregisterPassiveEffectsByCard(gameId, card._id.toString(), true);
 
         emitPassiveTrigger(EffectTriggers.ON_DEATH, game, {
           target: card.id,

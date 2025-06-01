@@ -1,7 +1,8 @@
 import { getRandomCards } from "./gameUtils.js";
 import { hasAbility } from "./card-helpers.js";
+import passiveEffectRegistry from "./passiveRegistry.js";
 
-const passiveEffectRegistry = new Map(); // gameId => { trigger => [ { card, effect, owner } ] }
+// const passiveEffectRegistry = new Map(); // gameId => { trigger => [ { card, effect, owner } ] }
 
 export const EffectTriggers = {
   ON_PLAY: "ON_PLAY",
@@ -27,13 +28,12 @@ const effectHandlers = {
     const result = [];
 
     for (const uid of game.userIds) {
-      const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of game.boards[uid] || []) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, burning: { value, duration } };
-          game.boards[uid][i] = updated;
+          // Applica l'effetto reale
+          c.burning = { value, duration };
 
+          // Aggiungi il log
           result.push({
             type: "BURN",
             source: card?.id ?? null,
@@ -47,19 +47,17 @@ const effectHandlers = {
 
     return result;
   },
-
   BUFF_ATTACK: ({ game, target, value, card }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
 
     for (const uid of game.userIds) {
-      const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of game.boards[uid] || []) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, attack: c.attack + value };
-          game.boards[uid][i] = updated;
+          // Applica il buff
+          c.attack += value;
 
+          // Registra il log
           result.push({
             type: "BUFF_ATTACK",
             source: card?.id ?? null,
@@ -72,19 +70,17 @@ const effectHandlers = {
 
     return result;
   },
-
   BUFF_DEFENSE: ({ game, target, value, card }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
 
     for (const uid of game.userIds) {
-      const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of game.boards[uid] || []) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, defense: c.defense + value };
-          game.boards[uid][i] = updated;
+          // Applica il buff
+          c.defense += value;
 
+          // Registra il log
           result.push({
             type: "BUFF_DEFENSE",
             source: card?.id ?? null,
@@ -97,7 +93,6 @@ const effectHandlers = {
 
     return result;
   },
-
   // COPY_CARD: ({ game, source, target, card }) => {
   //   const opponentId = game.userIds.find((u) => u !== source);
   //   const cardToCopy = game.boards[opponentId]?.find((c) => c.id === target);
@@ -225,61 +220,70 @@ const effectHandlers = {
       cardId: c.id,
     }));
   },
-  DAMAGE: ({ game, target, value = 1, card }) => {
+  DAMAGE: ({ game, card, source, target, value }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
+    const damage = value ?? card?.effect?.value ?? 0;
+    const hasAntiBarrier = hasAbility?.(card, "ANTI_SHIELD");
 
-    for (const t of targets) {
-      // Danno alla faccia
-      if (t in game.health) {
-        const before = game.health[t];
-        game.health[t] = Math.max(0, before - value);
+    const apply = (t) => {
+      let dealt = 0;
 
-        result.push({
-          type: "DAMAGE",
-          source: card?.id ?? null,
-          to: t,
-          amount: before - game.health[t],
-        });
+      if (!hasAntiBarrier && game.barrier?.[t] > 0) {
+        const absorb = Math.min(game.barrier[t], damage);
+        game.barrier[t] -= absorb;
+        const remaining = damage - absorb;
+        if (remaining > 0) {
+          if (game.health[t] != null) {
+            game.health[t] = Math.max(0, game.health[t] - remaining);
+            dealt = remaining;
+          } else {
+            // Cerca tra le carte
+            for (const uid of game.userIds) {
+              const card = game.boards[uid]?.find((c) => c.id === t);
+              if (card) {
+                card.defense = Math.max(0, card.defense - remaining);
+                dealt = remaining;
+                break;
+              }
+            }
+          }
+        }
       } else {
-        // Danno a una carta sul campo
-        for (const uid of game.userIds) {
-          const board = game.boards[uid] || [];
-          for (let i = 0; i < board.length; i++) {
-            const c = board[i];
-            if (c.id === t) {
-              const newDefense = Math.max(0, c.defense - value);
-              const updated = { ...c, defense: newDefense };
-              game.boards[uid][i] = updated;
-
-              result.push({
-                type: "DAMAGE",
-                source: card?.id ?? null,
-                to: c.id,
-                amount: c.defense - newDefense,
-              });
+        if (game.health[t] != null) {
+          game.health[t] = Math.max(0, game.health[t] - damage);
+          dealt = damage;
+        } else {
+          for (const uid of game.userIds) {
+            const card = game.boards[uid]?.find((c) => c.id === t);
+            if (card) {
+              card.defense = Math.max(0, card.defense - damage);
+              dealt = damage;
               break;
             }
           }
         }
       }
-    }
 
+      result.push({
+        type: "DAMAGE",
+        source: card?.id ?? null,
+        to: t,
+        amount: dealt,
+      });
+    };
+
+    targets.forEach(apply);
     return result;
   },
-
   FREEZE: ({ game, target, value = 1, card }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
 
     for (const uid of game.userIds) {
-      const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of game.boards[uid] || []) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, frozenFor: value };
-          game.boards[uid][i] = updated;
-
+          c.frozenFor = value;
           result.push({
             type: "FREEZE",
             source: card?.id ?? null,
@@ -292,15 +296,14 @@ const effectHandlers = {
 
     return result;
   },
-
   HEAL: ({ game, card, source, target, value }) => {
     const targets = Array.isArray(target) ? target : [target];
     const healValue = value ?? card?.effect?.value ?? 0;
     const result = [];
 
     for (const t of targets) {
+      // 1. Se è una faccia (playerId)
       if (t in game.health) {
-        // Cura la faccia
         const before = game.health[t];
         game.health[t] = Math.min(20, before + healValue);
 
@@ -311,24 +314,18 @@ const effectHandlers = {
           amount: game.health[t] - before,
         });
       } else {
-        // Cura una carta sul campo usando sostituzione forzata
+        // 2. Altrimenti cerca se è una carta in campo
         for (const uid of game.userIds) {
-          const board = game.boards[uid];
-          const index = board?.findIndex((c) => c.id === t);
-          if (index !== -1 && index != null) {
-            const targetCard = board[index];
+          const targetCard = game.boards[uid]?.find((c) => c.id === t);
+          if (targetCard) {
             const before = targetCard.defense;
-            const newCard = {
-              ...targetCard,
-              defense: Math.min(20, before + healValue),
-            };
-            game.boards[uid][index] = newCard;
+            targetCard.defense = Math.min(20, before + healValue);
 
             result.push({
               type: "HEAL",
               source: card?.id ?? null,
               to: targetCard.id,
-              amount: newCard.defense - before,
+              amount: targetCard.defense - before,
             });
             break;
           }
@@ -394,13 +391,9 @@ const effectHandlers = {
     const result = [];
 
     for (const uid of game.userIds) {
-      const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of game.boards[uid] || []) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, noHealFor: duration };
-          game.boards[uid][i] = updated;
-
+          c.noHealFor = duration;
           result.push({
             type: "NO_HEAL",
             source: card?.id ?? null,
@@ -413,7 +406,6 @@ const effectHandlers = {
 
     return result;
   },
-
   POLYMORPH: ({ game, target, card }) => {
     const intoId = card?.effect?.intoCardId;
     const targets = Array.isArray(target) ? target : [target];
@@ -505,25 +497,29 @@ const effectHandlers = {
 
     return result;
   },
-  SET_STATS: ({ game, target, value, card }) => {
+  SET_STATS: ({ game, target, card }) => {
+    console.log("CIAO SONO PASSIVO", target, "card", card);
     const targets = Array.isArray(target) ? target : [target];
-    const [attack, defense] = Array.isArray(value) ? value : [value, value];
+    const { attack, defense } = card?.effect?.value || {};
     const result = [];
-
+    for (const t of targets) {
+      console.log("target:", t, typeof t);
+      console.log("c.id:", card.id, typeof card.id);
+      console.log("uguali === ?", t === card.id);
+      console.log("uguali via String() ?", String(t) === String(card.id));
+    }
     for (const uid of game.userIds) {
       const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of board) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, attack, defense };
-          game.boards[uid][i] = updated;
-
+          if (typeof attack === "number") c.attack = attack;
+          if (typeof defense === "number") c.defense = defense;
           result.push({
             type: "SET_STATS",
             source: card?.id ?? null,
             to: c.id,
-            attack,
-            defense,
+            newAttack: c.attack,
+            newDefense: c.defense,
           });
         }
       }
@@ -531,7 +527,6 @@ const effectHandlers = {
 
     return result;
   },
-
   SHIELD: ({ game, target, value = 1, card }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
@@ -554,13 +549,9 @@ const effectHandlers = {
     const result = [];
 
     for (const uid of game.userIds) {
-      const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of game.boards[uid] || []) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, abilities: [] };
-          game.boards[uid][i] = updated;
-
+          c.abilities = [];
           result.push({
             type: "SILENCE",
             source: card?.id ?? null,
@@ -572,7 +563,6 @@ const effectHandlers = {
 
     return result;
   },
-
   STEAL_CARD: ({ game, source, card }) => {
     const opponentId = game.userIds.find((u) => u !== source);
     const result = [];
@@ -601,13 +591,9 @@ const effectHandlers = {
     const result = [];
 
     for (const uid of game.userIds) {
-      const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of game.boards[uid] || []) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, stunnedFor: value };
-          game.boards[uid][i] = updated;
-
+          c.stunnedFor = value;
           result.push({
             type: "STUN",
             source: card?.id ?? null,
@@ -620,23 +606,24 @@ const effectHandlers = {
 
     return result;
   },
-
   SWAP_STATS: ({ game, target, card }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
 
     for (const uid of game.userIds) {
       const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of board) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, attack: c.defense, defense: c.attack };
-          game.boards[uid][i] = updated;
+          const oldAttack = c.attack;
+          c.attack = c.defense;
+          c.defense = oldAttack;
 
           result.push({
             type: "SWAP_STATS",
             source: card?.id ?? null,
             to: c.id,
+            newAttack: c.attack,
+            newDefense: c.defense,
           });
         }
       }
@@ -644,22 +631,15 @@ const effectHandlers = {
 
     return result;
   },
-
   TAUNT: ({ game, target, card }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
 
     for (const uid of game.userIds) {
       const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
-        if (targets.includes(c.id) && !c.abilities?.includes("TAUNT")) {
-          const updated = {
-            ...c,
-            abilities: [...(c.abilities || []), "TAUNT"],
-          };
-          game.boards[uid][i] = updated;
-
+      for (const c of board) {
+        if (targets.includes(c.id) && !c.abilities.includes("TAUNT")) {
+          c.abilities.push("TAUNT");
           result.push({
             type: "TAUNT",
             source: card?.id ?? null,
@@ -671,7 +651,6 @@ const effectHandlers = {
 
     return result;
   },
-
   TRANSFORM_RANDOM: async ({ game, card, source }) => {
     const subtype = card?.effect?.subtype || "HERO";
     const result = [];
@@ -769,8 +748,8 @@ const effectHandlers = {
     delete clone.effect;
 
     // Sostituisci la carta originale con la nuova
-    // playerBoard[cardIndex] = clone;
-    game.boards[uid][index] = clone;
+    playerBoard[cardIndex] = clone;
+    // game.boards[uid][index] = clone;
     result.push({
       type: "TRANSFORM",
       source: card.id,
@@ -879,29 +858,23 @@ const effectHandlers = {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
 
-    const sourceStats = {
-      attack: source.attack,
-      defense: source.defense,
-    };
+    const allBoards = game.userIds.flatMap((uid) => game.boards[uid] || []);
+    const sourceCard = allBoards.find((c) => c.id === source);
+    if (!sourceCard) return result;
 
     for (const uid of game.userIds) {
       const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of board) {
         if (targets.includes(c.id)) {
-          const updated = {
-            ...c,
-            attack: sourceStats.attack,
-            defense: sourceStats.defense,
-          };
-          game.boards[uid][i] = updated;
-
+          c.attack = sourceCard.attack;
+          c.defense = sourceCard.defense;
           result.push({
             type: "COPY_STATS",
             source: card?.id ?? null,
             to: c.id,
-            attack: sourceStats.attack,
-            defense: sourceStats.defense,
+            copiedFrom: sourceCard.id,
+            newAttack: c.attack,
+            newDefense: c.defense,
           });
         }
       }
@@ -909,24 +882,20 @@ const effectHandlers = {
 
     return result;
   },
-
   SET_ATTACK: ({ game, target, value, card }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
 
     for (const uid of game.userIds) {
       const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of board) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, attack: value };
-          game.boards[uid][i] = updated;
-
+          c.attack = value;
           result.push({
             type: "SET_ATTACK",
             source: card?.id ?? null,
             to: c.id,
-            value,
+            newAttack: value,
           });
         }
       }
@@ -934,24 +903,20 @@ const effectHandlers = {
 
     return result;
   },
-
   SET_DEFENSE: ({ game, target, value, card }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
 
     for (const uid of game.userIds) {
       const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of board) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, defense: value };
-          game.boards[uid][i] = updated;
-
+          c.defense = value;
           result.push({
             type: "SET_DEFENSE",
             source: card?.id ?? null,
             to: c.id,
-            value,
+            newDefense: value,
           });
         }
       }
@@ -959,7 +924,6 @@ const effectHandlers = {
 
     return result;
   },
-
   SET_CRYSTALS: ({ game, source, value, card }) => {
     game.maxCrystals[source] = value;
 
@@ -996,23 +960,19 @@ const effectHandlers = {
 
     return result;
   },
-  DISABLE: ({ game, target, value = 1, card }) => {
+  DISABLE: ({ game, target, duration = 1, card }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
 
     for (const uid of game.userIds) {
-      const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of game.boards[uid] || []) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, disabledFor: value };
-          game.boards[uid][i] = updated;
-
+          c.disabledFor = duration;
           result.push({
             type: "DISABLE",
             source: card?.id ?? null,
             to: c.id,
-            duration: value,
+            duration,
           });
         }
       }
@@ -1020,7 +980,6 @@ const effectHandlers = {
 
     return result;
   },
-
   BURN_MANA: ({ game, source, value = 1, card }) => {
     const current = game.crystals[source] || 0;
     const burned = Math.min(current, value);
@@ -1040,13 +999,9 @@ const effectHandlers = {
     const result = [];
 
     for (const uid of game.userIds) {
-      const board = game.boards[uid] || [];
-      for (let i = 0; i < board.length; i++) {
-        const c = board[i];
+      for (const c of game.boards[uid] || []) {
         if (targets.includes(c.id)) {
-          const updated = { ...c, sleepFor: duration };
-          game.boards[uid][i] = updated;
-
+          c.sleepFor = duration;
           result.push({
             type: "SLEEP",
             source: card?.id ?? null,
@@ -1106,81 +1061,83 @@ export async function triggerEffects({
 }
 
 export function registerPassiveEffects(gameId, effects) {
-  if (!passiveEffectRegistry.has(gameId)) {
-    passiveEffectRegistry.set(gameId, {});
-  }
-
   const registry = passiveEffectRegistry.get(gameId);
+
   for (const { effect, card, owner } of effects) {
-    if (!registry[effect.trigger]) registry[effect.trigger] = [];
+    if (!registry[effect.trigger]) {
+      registry[effect.trigger] = [];
+    }
+
     registry[effect.trigger].push({
+      cardId: card.id, // salva solo l'id
       card,
-      effect,
       owner,
-      target: effect.target ?? null, // ✅ Salva target originale
+      target: effect.target ?? null,
     });
   }
-  console.log("Salvato", passiveEffectRegistry.get(gameId));
+
+  console.log("Salvato", registry);
 }
 
-export function unregisterPassiveEffectsByCard(gameId, cardId, isDbId = false) {
+export function unregisterPassiveEffectsByCard(
+  gameId,
+  cardId,
+  removeAll = false
+) {
   const registry = passiveEffectRegistry.get(gameId);
   if (!registry) return;
 
   for (const trigger of Object.keys(registry)) {
-    registry[trigger] = registry[trigger].filter(
-      ({ card }) => (isDbId ? card._id?.toString() : card.id) !== cardId
-    );
-    if (registry[trigger].length === 0) delete registry[trigger];
+    registry[trigger] = registry[trigger].filter(({ cardId: entryCardId }) => {
+      if (removeAll) {
+        return entryCardId !== cardId; // elimina se combacia
+      }
+      return true; // lascia tutto se removeAll è false
+    });
+
+    // Se il trigger è vuoto dopo il filtraggio, lo eliminiamo per pulizia
+    if (registry[trigger].length === 0) {
+      delete registry[trigger];
+    }
   }
 }
 
 export function clearPassiveEffects(gameId) {
+  const registry = passiveEffectRegistry.get(gameId);
+  if (!registry) return;
+
+  // Semplicemente svuota l'intero registro per quel gameId
+  passiveEffectRegistry.set(gameId, {});
+}
+export function DestroyGamePassiveEffect(gameId) {
   passiveEffectRegistry.delete(gameId);
 }
 
-// export function emitPassiveTrigger(trigger, game, eventData) {
-//   const reg = passiveEffectRegistry.get(game.id);
-//   if (!reg || !reg[trigger]) return;
-
-//   for (const { card, effect, owner, target } of reg[trigger]) {
-//     triggerEffects({
-//       trigger,
-//       game,
-//       card,
-//       source: owner,
-//       target: eventData.target ?? target, // ✅ Fallback al target originale
-//       value: eventData.value,
-//     });
-//   }
-// }
 export async function emitPassiveTrigger(trigger, game, eventData = {}) {
-  const gameId = game.id;
-  const results = [];
-  const registry = passiveEffectRegistry.get(gameId) || {};
-  const triggers = registry[trigger] || [];
+  // console.log("DEBUG game.id:", game.id);
+  // console.log("DEBUG game.gameId:", game.gameId);
+  const gameId = game.id; // <-- QUI IL FIX FINALE
+  const registry = passiveEffectRegistry.get(gameId) ?? {};
+  const triggers = registry[trigger] ?? [];
 
-  for (const { card, effect, owner, target } of triggers) {
-    const ownerId = findOwnerOfEffectCard(game, card.id);
-    const cardInstance = findCardInGame(game, card.id);
-    if (!cardInstance) continue;
+  // console.log("PASSIVE eventData", eventData);
+  // console.log("PASSIVE registry", registry);
+  // console.log("PASSIVE triggers", triggers);
 
-    const res = await triggerEffects({
+  for (const { cardId, card, effect, owner, target } of triggers) {
+    const result = await triggerEffects({
       trigger,
       game,
-      card: cardInstance,
-      source: eventData.actor ?? ownerId,
+      card: card,
+      source: eventData?.source ?? owner,
       target: eventData?.target ?? target ?? null,
-      value: effect.value ?? null,
-      eventData,
+      value: eventData?.value ?? null,
     });
 
-    if (res && res.length > 0) {
-      results.push(...res);
+    if (result) {
+      game.effectResults.push(...result);
     }
   }
-
-  return results;
 }
 
 export function resolveTargets({ target, source, game, count }) {
