@@ -198,7 +198,7 @@ export function createGame1v1(
   game.hands = { [userId1]: hand1, [userId2]: hand2 };
   game.boards = { [userId1]: [], [userId2]: [] };
   game.frames = { [userId1]: frame1, [userId2]: frame2 };
-
+  game.effectResults = [];
   return {
     game,
     sockets: { [userId1]: socket1, [userId2]: socket2 },
@@ -268,6 +268,7 @@ export function sharedGameView(game, userId) {
       [userId]: game.decks[userId]?.length || 0,
       [opponentId]: game.decks[opponentId]?.length || 0,
     },
+
     currentTurnIndex: game.currentTurnIndex,
     currentTurn: game.currentTurn,
   };
@@ -412,7 +413,7 @@ export async function finalizeGameUpdate({ game, ioInstance, log }) {
 }
 export function addGameHistoryEntry(game, { type, actor, details }) {
   if (!game.history) game.history = [];
-
+  console.log("DETTAGLIO :", details);
   const entry = {
     type,
     actor,

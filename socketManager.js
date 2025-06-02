@@ -323,7 +323,8 @@ export const initializeSocket = (server) => {
       emitSanitizedGameUpdate(ioInstance, updatedGame);
       const nextPlayer = updatedGame.currentPlayerId;
       const socketId = updatedGame.userSockets?.[nextPlayer];
-      const drawnCard = result.effects?.drawnCard ?? null;
+      const drawnCard = result.endTurn?.drawnCard ?? null;
+
       const deckLength = updatedGame.decks[nextPlayer]?.length ?? 0;
       const frame = updatedGame.frames?.[nextPlayer] || "";
 

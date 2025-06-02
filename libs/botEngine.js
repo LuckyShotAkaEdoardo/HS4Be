@@ -130,7 +130,7 @@ export async function simulateBotMove(gameId, botId, games, ioInstance) {
       const socketId = result.game.userSockets?.[nextPlayer];
       const frame = result.game.frames?.[nextPlayer] ?? "";
       const deckLength = result.game.decks[nextPlayer]?.length ?? 0;
-      const drawnCard = result.effects?.drawnCard ?? null;
+      const drawnCard = result.endTurn?.drawnCard ?? null;
 
       ioInstance.to(result.game.id).emit("turn-update", {
         currentPlayerId: nextPlayer,

@@ -32,7 +32,7 @@ export async function handlePlayCard({
   if (realCard.cost > (g.crystals[userId] || 0)) {
     return { error: "Non hai abbastanza cristalli" };
   }
-
+  var effectsResult = [];
   // 🏹 Validazione e assegnazione target
   if (targets?.length > 0 && realCard.effect?.target.includes("CHOOSE")) {
     // console.log("guarda qui", realCard.effect.target, userId, g);
@@ -44,8 +44,8 @@ export async function handlePlayCard({
     }
     realCard.effect.target = [...targets]; // Salvo sul vero oggetto in uso
 
-    console.log("guarda quello che arriva da fe", targets);
-    console.log("guarda quello che trova be", realCard.effect.target);
+    // console.log("guarda quello che arriva da fe", targets);
+    // console.log("guarda quello che trova be", realCard.effect.target);
   }
 
   // ✂️ Rimuovo carta dalla mano e cristalli
@@ -76,31 +76,36 @@ export async function handlePlayCard({
       owner: userId,
     });
 
-    const effectsResult = await triggerEffects({
+    const effectsRe = await triggerEffects({
       trigger: EffectTriggers.ON_ENTER_BOARD,
       game: g,
       card: realCard,
       source: userId,
       target: realCard.effect?.target ?? realCard.id, // fallback
     });
-
+    if (effectsRe) {
+      effectsResult.push(effectsRe);
+    }
     console.log("risultato effetto", effectsResult); // 🔥 Trigger effetto attivo
   }
 
   if (realCard.effect?.trigger === EffectTriggers.ON_PLAY) {
-    const effectsResult = await triggerEffects({
+    const effectsRe = await triggerEffects({
       trigger: EffectTriggers.ON_PLAY,
       game: g,
       card: realCard,
       source: userId,
       target: realCard.effect.target ?? null,
     });
+    if (effectsRe) {
+      effectsResult.push(effectsRe);
+    }
     console.log("risultato effetto", effectsResult); // 🔥 Trigger effetto attivo
   }
 
   // 🌀 Registra effetti passivi non ON_PLAY
   if (realCard.effect && realCard.effect.trigger !== EffectTriggers.ON_PLAY) {
-    console.log("REAL REGISTER EFFECT", JSON.stringify(realCard.effect));
+    //  console.log("REAL REGISTER EFFECT", JSON.stringify(realCard.effect));
 
     registerPassiveEffects(gameId, [
       { effect: realCard.effect, card: realCard, owner: userId },
@@ -117,6 +122,8 @@ export async function handlePlayCard({
   checkVictoryConditions(gameId, games, (gid, w, l) =>
     endGame(gid, games, ioInstance, w, l)
   );
+  const passiveEffects = g.effectResults ?? [];
+  g.effectResults = []; // svuota il buffer
 
   return {
     game: g,
@@ -127,6 +134,7 @@ export async function handlePlayCard({
         cardId: realCard.id,
         cardName: realCard.name,
         index,
+        effects: [...effectsResult, ...passiveEffects], // <<--- qui aggiungi anche gli effetti applicati
       },
     },
   };
@@ -247,7 +255,8 @@ export function handleAttack({
   const updatedAtt = g.boards[userId]?.find((c) => c.id === realAttacker.id);
   if (updatedAtt) updatedAtt.justPlayed = true;
   realAttacker.hasAttackedThisTurn = true;
-
+  const passiveEffects = g.effectResults ?? [];
+  g.effectResults = []; // svuota il buffer
   checkDeadCards(gameId, g);
   checkVictoryConditions(gameId, games, (gid, w, l) =>
     endGame(gid, games, ioInstance, w, l)
@@ -262,6 +271,7 @@ export function handleAttack({
         attackerId: attacker.id,
         target: target.id,
       },
+      effects: [...passiveEffects],
     },
   };
 }
@@ -329,11 +339,6 @@ export function handleEndTurn({ gameId, userId, games }) {
   if (drawnCard) {
     g.hands[nextPlayerId] = g.hands[nextPlayerId] || [];
     g.hands[nextPlayerId].push(drawnCard);
-    addVisualEvent(g, {
-      type: "DRAW",
-      cardId: drawnCard.id,
-      owner: nextPlayerId,
-    });
   }
 
   // 🔁 Reset stato creature
@@ -349,7 +354,8 @@ export function handleEndTurn({ gameId, userId, games }) {
   emitPassiveTrigger(EffectTriggers.ON_TURN_START, g, {
     actor: nextPlayerId,
   });
-
+  const passiveEffects = g.effectResults ?? [];
+  g.effectResults = []; // svuota il buffer
   // ✅ Risultato finale
   return {
     game: g,
@@ -361,8 +367,9 @@ export function handleEndTurn({ gameId, userId, games }) {
         turn: g.currentTurn,
       },
     },
-    effects: {
-      drawnCard,
+    effects: [...passiveEffects],
+    endTurn: {
+      drawnCard: drawnCard ? { cardId: drawnCard.id } : null,
     },
   };
 }

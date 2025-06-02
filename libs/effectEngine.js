@@ -93,33 +93,7 @@ const effectHandlers = {
 
     return result;
   },
-  // COPY_CARD: ({ game, source, target, card }) => {
-  //   const opponentId = game.userIds.find((u) => u !== source);
-  //   const cardToCopy = game.boards[opponentId]?.find((c) => c.id === target);
 
-  //   if (cardToCopy && game.hands[source].length < 10) {
-  //     // Crea copia con nuovo ID
-  //     const clone = {
-  //       ...cardToCopy,
-  //       id: `${cardToCopy.id}-copy-${Date.now()}`,
-  //     };
-
-  //     // Aggiungi alla mano del giocatore
-  //     game.hands[source].push(clone);
-
-  //     // Log
-  //     return [
-  //       {
-  //         type: "COPY_CARD",
-  //         source: card?.id ?? null,
-  //         copiedFrom: cardToCopy.id,
-  //         copyId: clone.id,
-  //       },
-  //     ];
-  //   }
-
-  //   return [];
-  // },
   COPY_CARD: ({ game, source, target, card }) => {
     const allBoards = game.userIds.flatMap((uid) => game.boards[uid] || []);
     const cardToCopy = allBoards.find((c) => c.id === target);
@@ -498,16 +472,15 @@ const effectHandlers = {
     return result;
   },
   SET_STATS: ({ game, target, card }) => {
-    console.log("CIAO SONO PASSIVO", target, "card", card);
     const targets = Array.isArray(target) ? target : [target];
     const { attack, defense } = card?.effect?.value || {};
     const result = [];
-    for (const t of targets) {
-      console.log("target:", t, typeof t);
-      console.log("c.id:", card.id, typeof card.id);
-      console.log("uguali === ?", t === card.id);
-      console.log("uguali via String() ?", String(t) === String(card.id));
-    }
+    // for (const t of targets) {
+    //   console.log("target:", t, typeof t);
+    //   console.log("c.id:", card.id, typeof card.id);
+    //   console.log("uguali === ?", t === card.id);
+    //   console.log("uguali via String() ?", String(t) === String(card.id));
+    // }
     for (const uid of game.userIds) {
       const board = game.boards[uid] || [];
       for (const c of board) {
@@ -1035,9 +1008,9 @@ export async function triggerEffects({
     game,
     count,
   });
-  console.log("resolveTargets", resolvedTargets);
+  // console.log("resolveTargets", resolvedTargets);
   if (typeof card.effect.handler === "function") {
-    await card.effect.handler({
+    const result = await card.effect.handler({
       game,
       card,
       source,
@@ -1045,6 +1018,7 @@ export async function triggerEffects({
       value,
       skipBoardCheck,
     });
+    return result ?? [];
   } else if (effectHandlers[card.effect.type]) {
     const result = await effectHandlers[card.effect.type]({
       game,
@@ -1056,8 +1030,10 @@ export async function triggerEffects({
     });
 
     // opzionale: log o accumulo
-    console.log("risultato effetto", result);
+    // console.log("risultato effetto", result);
+    return result ?? [];
   }
+  return [];
 }
 
 export function registerPassiveEffects(gameId, effects) {
@@ -1076,7 +1052,7 @@ export function registerPassiveEffects(gameId, effects) {
     });
   }
 
-  console.log("Salvato", registry);
+  // console.log("Salvato", registry);
 }
 
 export function unregisterPassiveEffectsByCard(
@@ -1152,63 +1128,63 @@ export function resolveTargets({ target, source, game, count }) {
 
     switch (target) {
       case "ALL_PLAYERS":
-        console.log("ALL_PLAYERS", game.userIds.slice(0, limit));
+        // console.log("ALL_PLAYERS", game.userIds.slice(0, limit));
         return game.userIds.slice(0, limit);
 
       case "ALL_CARDS":
-        console.log(
-          "ALL_CARDS",
-          game.userIds
-            .flatMap((uid) => game.boards[uid]?.map((c) => c.id) || [])
-            .slice(0, limit)
-        );
+        // console.log(
+        //   "ALL_CARDS",
+        //   game.userIds
+        //     .flatMap((uid) => game.boards[uid]?.map((c) => c.id) || [])
+        //     .slice(0, limit)
+        // );
         return game.userIds
           .flatMap((uid) => game.boards[uid]?.map((c) => c.id) || [])
           .slice(0, limit);
 
       case "SELF":
-        console.log("SELF", [source]);
+        // console.log("SELF", [source]);
         return [source];
 
       case "OPPONENT":
-        console.log("OPPONENT", [opponentId]);
+        // console.log("OPPONENT", [opponentId]);
         return [opponentId];
 
       case "ALL_ALLIES":
-        console.log(
-          "ALL_ALLIES",
-          game.boards[allyId]?.map((c) => c.id).slice(0, limit) || []
-        );
+        // console.log(
+        //   "ALL_ALLIES",
+        //   game.boards[allyId]?.map((c) => c.id).slice(0, limit) || []
+        // );
         return game.boards[allyId]?.map((c) => c.id).slice(0, limit) || [];
 
       case "ALL_ENEMIES":
-        console.log(
-          "ALL_ENEMIES",
-          game.boards[opponentId]?.map((c) => c.id).slice(0, limit) || []
-        );
+        // console.log(
+        //   "ALL_ENEMIES",
+        //   game.boards[opponentId]?.map((c) => c.id).slice(0, limit) || []
+        // );
         return game.boards[opponentId]?.map((c) => c.id).slice(0, limit) || [];
 
       case "ENEMY_CARD":
-        console.log(
-          "ENEMY_CARD",
-          game.boards[opponentId]?.map((c) => c.id).slice(0, limit) || []
-        );
+        // console.log(
+        //   "ENEMY_CARD",
+        //   game.boards[opponentId]?.map((c) => c.id).slice(0, limit) || []
+        // );
         return game.boards[opponentId]?.map((c) => c.id).slice(0, limit) || [];
 
       case "ALLY":
-        console.log(
-          "ALLY",
-          game.boards[allyId]?.map((c) => c.id).slice(0, limit) || []
-        );
+        // console.log(
+        //   "ALLY",
+        //   game.boards[allyId]?.map((c) => c.id).slice(0, limit) || []
+        // );
         return game.boards[allyId]?.map((c) => c.id).slice(0, limit) || [];
 
       case "RANDOM_ENEMY": {
-        console.log(
-          "RANDOM_ENEMY",
-          shuffle(enemyBoard)
-            .slice(0, limit)
-            .map((c) => c.id)
-        );
+        // console.log(
+        //   "RANDOM_ENEMY",
+        //   shuffle(enemyBoard)
+        //     .slice(0, limit)
+        //     .map((c) => c.id)
+        // );
         const enemyBoard = game.boards[opponentId] || [];
         return shuffle(enemyBoard)
           .slice(0, limit)
@@ -1231,13 +1207,13 @@ export function resolveTargets({ target, source, game, count }) {
 
       default:
         // fallback: ID diretto
-        console.log("fallback: ID diretto", [target]);
+        // console.log("fallback: ID diretto", [target]);
         return [target];
     }
   }
 
   if (Array.isArray(target)) {
-    console.log("target.slice(0, limit)", target.slice(0, limit));
+    // console.log("target.slice(0, limit)", target.slice(0, limit));
     return target.slice(0, limit);
   }
 
