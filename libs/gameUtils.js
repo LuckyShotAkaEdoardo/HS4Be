@@ -49,9 +49,9 @@ export function emitSanitizedGameUpdate(io, game) {
 
     const view = sharedGameView(game, userId);
 
-    if (game._visualEvents?.[userId]) {
-      view.visualEvents = game._visualEvents[userId];
-    }
+    // if (game._visualEvents?.[userId]) {
+    //   view.visualEvents = game._visualEvents[userId];
+    // }
     // console.log("[DEBUG] view:", view);
     socket.emit("game-update", view);
   }
@@ -190,7 +190,7 @@ export function createGame1v1(
 
   game.crystals = { [userId1]: 1, [userId2]: 1 };
   game.maxCrystals = { [userId1]: 1, [userId2]: 1 };
-  game.health = { [userId1]: 20, [userId2]: 20 };
+  game.health = { [userId1]: 30, [userId2]: 30 };
   game.barrier = { [userId1]: 0, [userId2]: 0 };
   game.allPlayers = [userId1, userId2];
 
@@ -198,7 +198,7 @@ export function createGame1v1(
   game.hands = { [userId1]: hand1, [userId2]: hand2 };
   game.boards = { [userId1]: [], [userId2]: [] };
   game.frames = { [userId1]: frame1, [userId2]: frame2 };
-  game.effectResults = [];
+  (game._visualEvents = {}), (game.effectResults = []);
   return {
     game,
     sockets: { [userId1]: socket1, [userId2]: socket2 },
@@ -268,7 +268,10 @@ export function sharedGameView(game, userId) {
       [userId]: game.decks[userId]?.length || 0,
       [opponentId]: game.decks[opponentId]?.length || 0,
     },
-
+    visualEvents: [
+      ...(game._visualEvents?.[userId] ?? []),
+      ...(game._visualEvents?.[opponentId] ?? []),
+    ],
     currentTurnIndex: game.currentTurnIndex,
     currentTurn: game.currentTurn,
   };
@@ -364,8 +367,11 @@ export async function getRandomCards({
 }
 
 export function addVisualEvent(game, event) {
-  game.visualEvents ||= [];
-  game.visualEvents.push(event);
+  if (!game._visualEvents) game._visualEvents = {};
+  for (const userId of game.userIds) {
+    game._visualEvents[userId] ||= [];
+    game._visualEvents[userId].push(event);
+  }
 }
 
 export function serializeGame(game) {
@@ -455,22 +461,26 @@ export function getValidTargetIds(targetType, userId, game) {
 
   const myBoard = game.boards[userId] || [];
   const oppBoard = game.boards[opponentId] || [];
-  // console.log("OpponentId calcolato:", opponentId);
-  // console.log(
-  //   "OppBoard IDs:",
-  //   oppBoard.map((c) => c.id)
-  // );
+
+  // Qui filtriamo le carte che NON hanno STEALTH
+  const myBoardVisible = myBoard.filter(
+    (c) => !(c.abilities || []).includes("STEALTH")
+  );
+  const oppBoardVisible = oppBoard.filter(
+    (c) => !(c.abilities || []).includes("STEALTH")
+  );
+
   switch (targetType) {
     case "CHOOSE_ANY":
-      return [...myBoard, ...oppBoard].map((c) => c.id);
+      return [...myBoardVisible, ...oppBoardVisible].map((c) => c.id);
     case "CHOOSE_ENEMY":
-      return oppBoard.map((c) => c.id);
+      return oppBoardVisible.map((c) => c.id);
     case "CHOOSE_ALLY":
-      return myBoard.map((c) => c.id);
+      return myBoardVisible.map((c) => c.id);
     case "CHOOSE_ENEMY_OR_FACE":
-      return [...oppBoard.map((c) => c.id), `FACE:${opponentId}`];
+      return [...oppBoardVisible.map((c) => c.id), `FACE:${opponentId}`];
     case "CHOOSE_ALLY_OR_FACE":
-      return [...myBoard.map((c) => c.id), `FACE:${userId}`];
+      return [...myBoardVisible.map((c) => c.id), `FACE:${userId}`];
     default:
       return [];
   }

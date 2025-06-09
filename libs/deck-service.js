@@ -70,3 +70,20 @@ export async function getSelectedDeckAndFrame(userId) {
     cards: cardsOrdered,
   };
 }
+
+export async function getCardById(cardId) {
+  if (!mongoose.Types.ObjectId.isValid(cardId)) {
+    throw new Error("ID non valido: " + cardId);
+  }
+
+  const card = await Card.findOne({
+    _id: new mongoose.Types.ObjectId(cardId),
+    isVisibile: true, // facciamo coerenza con il resto del codice
+  }).lean();
+
+  if (!card) {
+    throw new Error("Carta non trovata per ID: " + cardId);
+  }
+
+  return card;
+}

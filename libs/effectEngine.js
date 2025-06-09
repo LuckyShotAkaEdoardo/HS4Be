@@ -1,7 +1,7 @@
 import { getRandomCards } from "./gameUtils.js";
-import { hasAbility } from "./card-helpers.js";
+import { hasAbility, handleDivineShield } from "./card-helpers.js";
 import passiveEffectRegistry from "./passiveRegistry.js";
-
+import { getCardById } from "./deck-service.js"; // <-- Importa il nuovo metodo
 // const passiveEffectRegistry = new Map(); // gameId => { trigger => [ { card, effect, owner } ] }
 
 export const EffectTriggers = {
@@ -30,16 +30,21 @@ const effectHandlers = {
     for (const uid of game.userIds) {
       for (const c of game.boards[uid] || []) {
         if (targets.includes(c.id)) {
-          // Applica l'effetto reale
-          c.burning = { value, duration };
+          if (!c.burning) {
+            // se non ha già burning
+            c.burning = { value, duration };
+          } else {
+            // se ha già burning, rinnova la durata al massimo
+            c.burning.duration = Math.max(c.burning.duration, duration);
+            c.burning.value = value; // oppure somma, a seconda della tua logica
+          }
 
-          // Aggiungi il log
           result.push({
             type: "BURN",
             source: card?.id ?? null,
             to: c.id,
             value,
-            duration,
+            duration: c.burning.duration,
           });
         }
       }
@@ -47,6 +52,7 @@ const effectHandlers = {
 
     return result;
   },
+
   BUFF_ATTACK: ({ game, target, value, card }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
@@ -200,41 +206,35 @@ const effectHandlers = {
     const damage = value ?? card?.effect?.value ?? 0;
     const hasAntiBarrier = hasAbility?.(card, "ANTI_SHIELD");
 
-    const apply = (t) => {
+    const applyDamageToEntity = (t) => {
       let dealt = 0;
 
-      if (!hasAntiBarrier && game.barrier?.[t] > 0) {
-        const absorb = Math.min(game.barrier[t], damage);
-        game.barrier[t] -= absorb;
-        const remaining = damage - absorb;
-        if (remaining > 0) {
-          if (game.health[t] != null) {
-            game.health[t] = Math.max(0, game.health[t] - remaining);
-            dealt = remaining;
-          } else {
-            // Cerca tra le carte
-            for (const uid of game.userIds) {
-              const card = game.boards[uid]?.find((c) => c.id === t);
-              if (card) {
-                card.defense = Math.max(0, card.defense - remaining);
-                dealt = remaining;
-                break;
-              }
-            }
-          }
-        }
-      } else {
-        if (game.health[t] != null) {
+      // Se target è player (face damage)
+      if (game.health[t] != null) {
+        if (!hasAntiBarrier && game.barrier?.[t] > 0) {
+          const absorb = Math.min(game.barrier[t], damage);
+          game.barrier[t] -= absorb;
+          const remaining = damage - absorb;
+          game.health[t] = Math.max(0, game.health[t] - remaining);
+          dealt = remaining;
+        } else {
           game.health[t] = Math.max(0, game.health[t] - damage);
           dealt = damage;
-        } else {
-          for (const uid of game.userIds) {
-            const card = game.boards[uid]?.find((c) => c.id === t);
-            if (card) {
-              card.defense = Math.max(0, card.defense - damage);
+        }
+      } else {
+        // Altrimenti cerca il target tra le board
+        for (const uid of game.userIds) {
+          const unit = game.boards[uid]?.find((c) => c.id === t);
+          if (unit) {
+            // Prima verifica Divine Shield
+            const shieldBroken = handleDivineShield(unit);
+            if (!shieldBroken) {
+              unit.defense = Math.max(0, unit.defense - damage);
               dealt = damage;
-              break;
+            } else {
+              dealt = 0; // danno assorbito dallo shield
             }
+            break;
           }
         }
       }
@@ -247,9 +247,10 @@ const effectHandlers = {
       });
     };
 
-    targets.forEach(apply);
+    targets.forEach(applyDamageToEntity);
     return result;
   },
+
   FREEZE: ({ game, target, value = 1, card }) => {
     const targets = Array.isArray(target) ? target : [target];
     const result = [];
@@ -270,13 +271,12 @@ const effectHandlers = {
 
     return result;
   },
-  HEAL: ({ game, card, source, target, value }) => {
+  HEAL: async ({ game, card, source, target, value }) => {
     const targets = Array.isArray(target) ? target : [target];
     const healValue = value ?? card?.effect?.value ?? 0;
     const result = [];
 
     for (const t of targets) {
-      // 1. Se è una faccia (playerId)
       if (t in game.health) {
         const before = game.health[t];
         game.health[t] = Math.min(20, before + healValue);
@@ -288,12 +288,16 @@ const effectHandlers = {
           amount: game.health[t] - before,
         });
       } else {
-        // 2. Altrimenti cerca se è una carta in campo
         for (const uid of game.userIds) {
           const targetCard = game.boards[uid]?.find((c) => c.id === t);
           if (targetCard) {
             const before = targetCard.defense;
-            targetCard.defense = Math.min(20, before + healValue);
+
+            // <-- Qui leggiamo la card originale per sapere la max defense
+            const baseCard = await getCardById(targetCard._id);
+            const maxDefense = baseCard?.defense ?? 20;
+
+            targetCard.defense = Math.min(maxDefense, before + healValue);
 
             result.push({
               type: "HEAL",
@@ -301,6 +305,7 @@ const effectHandlers = {
               to: targetCard.id,
               amount: targetCard.defense - before,
             });
+
             break;
           }
         }

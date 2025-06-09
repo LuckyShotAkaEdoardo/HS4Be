@@ -35,33 +35,35 @@ export function canAttack(attacker, target, game, userId) {
     };
   }
 
-  if (attacker.frozenFor > 0) {
-    console.log("[BLOCK] Congelata");
+  if (attacker.frozenFor != null && attacker.frozenFor > 0) {
+    console.log("[BLOCK] Congelata (frozenFor > 0)");
     return { allowed: false, reason: "È congelata" };
   }
 
-  if (attacker.stunnedFor > 0) {
-    console.log("[BLOCK] Stordita");
+  if (attacker.stunnedFor != null && attacker.stunnedFor > 0) {
+    console.log("[BLOCK] Stordita (stunnedFor > 0)");
     return { allowed: false, reason: "È stordita" };
   }
 
+  // RUSH non può colpire direttamente FACE
   if (hasRush && target?.type === "FACE") {
-    console.log("[BLOCK] RUSH vs FACE");
+    console.log("[BLOCK] RUSH non può colpire FACE");
     return {
       allowed: false,
-      reason: "RUSH può attaccare solo creature",
+      reason: "RUSH può attaccare solo creature nemiche",
     };
   }
 
+  // TAUNT check se si prova a colpire il FACE
   if (target?.type === "FACE") {
     const opponentId = game.allPlayers.find((u) => u !== userId);
     const enemyBoard = game.boards[opponentId] || [];
     const wallExists = enemyBoard.some((c) => hasAbility(c, "TAUNT"));
     if (wallExists) {
-      console.log("[BLOCK] TAUNT nemico presente");
+      console.log("[BLOCK] Il FACE è protetto da TAUNT");
       return {
         allowed: false,
-        reason: "Il FACE è protetto da un TAUNT nemico",
+        reason: "Il FACE è protetto da una creatura con TAUNT",
       };
     }
   }
@@ -69,13 +71,11 @@ export function canAttack(attacker, target, game, userId) {
   console.log("[OK] Può attaccare");
   return { allowed: true };
 }
-
-export function handleDivineShield(defender, attacker) {
+export function handleDivineShield(defender) {
   if (hasAbility(defender, "DIVINE_SHIELD")) {
     defender.abilities = defender.abilities.filter(
       (a) => a !== "DIVINE_SHIELD"
     );
-    attacker.defense -= defender.attack;
     return true;
   }
   return false;

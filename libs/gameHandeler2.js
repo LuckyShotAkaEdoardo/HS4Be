@@ -32,28 +32,48 @@ export async function handlePlayCard({
   if (realCard.cost > (g.crystals[userId] || 0)) {
     return { error: "Non hai abbastanza cristalli" };
   }
+
   var effectsResult = [];
+
   // 🏹 Validazione e assegnazione target
   if (targets?.length > 0 && realCard.effect?.target.includes("CHOOSE")) {
-    // console.log("guarda qui", realCard.effect.target, userId, g);
     const validTargets = getValidTargetIds(realCard.effect.target, userId, g);
-    // console.log("guarda i valids target", validTargets);
-    const invalidTargets = targets.filter((t) => !validTargets.includes(t));
+
+    if (!validTargets || validTargets.length === 0) {
+      return { error: "Nessun target valido disponibile per questo effetto." };
+    }
+
+    const normalizedTargets = Array.isArray(targets)
+      ? [
+          ...new Set(
+            targets.filter((t) => typeof t === "string" && t.trim() !== "")
+          ),
+        ]
+      : [];
+
+    const invalidTargets = normalizedTargets.filter(
+      (t) => !validTargets.includes(t)
+    );
+
     if (invalidTargets.length > 0) {
       return { error: `Target non valido: ${invalidTargets.join(", ")}` };
     }
-    realCard.effect.target = [...targets]; // Salvo sul vero oggetto in uso
 
-    // console.log("guarda quello che arriva da fe", targets);
-    // console.log("guarda quello che trova be", realCard.effect.target);
+    realCard.effect.target = [...normalizedTargets];
   }
 
   // ✂️ Rimuovo carta dalla mano e cristalli
   g.hands[userId] = g.hands[userId].filter((c) => c.id !== realCard.id);
   g.crystals[userId] -= realCard.cost;
+
   if (realCard.type === "MAGIC") {
+    addVisualEvent(g, {
+      type: "CAST_SPELL",
+      cardId: realCard.id,
+      owner: userId,
+    });
   }
-  // 🧱 Solo se HERO → inserisci in board
+
   if (realCard.type === "HERO") {
     g.boards[userId] = g.boards[userId] || [];
     if (g.boards[userId].length >= 6) {
@@ -81,12 +101,23 @@ export async function handlePlayCard({
       game: g,
       card: realCard,
       source: userId,
-      target: realCard.effect?.target ?? realCard.id, // fallback
+      target: realCard.effect?.target ?? realCard.id,
     });
+
     if (effectsRe) {
       effectsResult.push(effectsRe);
+
+      for (const eff of effectsRe.flat()) {
+        if (eff.to && eff.type) {
+          addVisualEvent(g, {
+            type: eff.type,
+            cardId: eff.to,
+            amount: eff.amount ?? eff.value ?? null,
+            source: userId,
+          });
+        }
+      }
     }
-    console.log("risultato effetto", effectsResult); // 🔥 Trigger effetto attivo
   }
 
   if (realCard.effect?.trigger === EffectTriggers.ON_PLAY) {
@@ -97,22 +128,29 @@ export async function handlePlayCard({
       source: userId,
       target: realCard.effect.target ?? null,
     });
+
     if (effectsRe) {
       effectsResult.push(effectsRe);
+
+      for (const eff of effectsRe.flat()) {
+        if (eff.to && eff.type) {
+          addVisualEvent(g, {
+            type: eff.type,
+            cardId: eff.to,
+            amount: eff.amount ?? eff.value ?? null,
+            source: userId,
+          });
+        }
+      }
     }
-    console.log("risultato effetto", effectsResult); // 🔥 Trigger effetto attivo
   }
 
-  // 🌀 Registra effetti passivi non ON_PLAY
   if (realCard.effect && realCard.effect.trigger !== EffectTriggers.ON_PLAY) {
-    //  console.log("REAL REGISTER EFFECT", JSON.stringify(realCard.effect));
-
     registerPassiveEffects(gameId, [
       { effect: realCard.effect, card: realCard, owner: userId },
     ]);
   }
 
-  // 🎯 Trigger globali
   emitPassiveTrigger(EffectTriggers.ON_CARD_PLAYED, g, {
     target: realCard.id,
     source: userId,
@@ -122,8 +160,9 @@ export async function handlePlayCard({
   checkVictoryConditions(gameId, games, (gid, w, l) =>
     endGame(gid, games, ioInstance, w, l)
   );
+
   const passiveEffects = g.effectResults ?? [];
-  g.effectResults = []; // svuota il buffer
+  g.effectResults = [];
 
   return {
     game: g,
@@ -134,7 +173,7 @@ export async function handlePlayCard({
         cardId: realCard.id,
         cardName: realCard.name,
         index,
-        effects: [...effectsResult, ...passiveEffects], // <<--- qui aggiungi anche gli effetti applicati
+        effects: [...effectsResult, ...passiveEffects],
       },
     },
   };
@@ -160,6 +199,7 @@ export function handleAttack({
   if (!allowed) {
     return { error: reason || "Questa pedina non può attaccare questo turno" };
   }
+
   emitPassiveTrigger(EffectTriggers.ON_ATTACK, g, {
     source: userId,
     target,
@@ -177,10 +217,12 @@ export function handleAttack({
       value: realAttacker.attack,
     });
 
-    const shielded = handleDivineShield(realTarget, realAttacker);
+    // 1️⃣ GESTIONE DIVINE_SHIELD (usiamo la tua funzione)
+    const shielded = handleDivineShield(realTarget);
+
+    // 2️⃣ DANNO NORMALE SE NON PROTETTO DA SHIELD
     if (!shielded) {
       realTarget.defense -= realAttacker.attack;
-      realAttacker.defense -= realTarget.attack;
 
       addVisualEvent(g, {
         type: "DAMAGE",
@@ -189,34 +231,39 @@ export function handleAttack({
         source: userId,
       });
 
+      if (hasAbility(realAttacker, "LIFESTEAL") && realAttacker.attack > 0) {
+        g.health[userId] = Math.min(
+          20,
+          (g.health[userId] || 0) + realAttacker.attack
+        );
+        addVisualEvent(g, {
+          type: "LIFESTEAL",
+          source: userId,
+          amount: realAttacker.attack,
+        });
+      }
+    } else {
+      // aggiungiamo comunque il visual event di shield rotto (utile per il client)
       addVisualEvent(g, {
-        type: "DAMAGE",
-        cardId: realAttacker.id,
-        amount: realTarget.attack,
-        source: target.playerId,
-      });
-    }
-
-    if (
-      !shielded &&
-      hasAbility(realAttacker, "LIFESTEAL") &&
-      realAttacker.attack > 0
-    ) {
-      g.health[userId] = Math.min(
-        20,
-        (g.health[userId] || 0) + realAttacker.attack
-      );
-      addVisualEvent(g, {
-        type: "LIFESTEAL",
+        type: "DIVINE_SHIELD_BROKEN",
+        cardId: realTarget.id,
         source: userId,
-        amount: realAttacker.attack,
       });
     }
 
+    // 3️⃣ DANNI SUBITI DALL'ATTACCANTE (subisce SEMPRE danno dal difensore)
+    realAttacker.defense -= realTarget.attack;
+    addVisualEvent(g, {
+      type: "DAMAGE",
+      cardId: realAttacker.id,
+      amount: realTarget.attack,
+      source: target.playerId,
+    });
+
+    // 4️⃣ GESTIONE MORTI
     realAttacker.abilities = realAttacker.abilities?.filter(
       (a) => a !== "STEALTH"
     );
-    //realTarget.abilities = realTarget.abilities?.filter((a) => a !== "STEALTH");
 
     if (realTarget.defense <= 0) {
       unregisterPassiveEffectsByCard(gameId, realTarget.id);
@@ -225,6 +272,7 @@ export function handleAttack({
         source: userId,
       });
     }
+
     if (realAttacker.defense <= 0) {
       unregisterPassiveEffectsByCard(gameId, realAttacker.id);
       emitPassiveTrigger(EffectTriggers.ON_DEATH, g, {
@@ -256,7 +304,8 @@ export function handleAttack({
   if (updatedAtt) updatedAtt.justPlayed = true;
   realAttacker.hasAttackedThisTurn = true;
   const passiveEffects = g.effectResults ?? [];
-  g.effectResults = []; // svuota il buffer
+  g.effectResults = [];
+
   checkDeadCards(gameId, g);
   checkVictoryConditions(gameId, games, (gid, w, l) =>
     endGame(gid, games, ioInstance, w, l)
